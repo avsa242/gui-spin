@@ -12,40 +12,56 @@
 
 con
 
+    NR_BUTTONS  = 1                             ' to change, override this in the parent object
+
     { button states }
     UP          = 0
     DOWN        = 1
     PUSHED      = 1
 
-    { button attributes structure (longs) }
-    { button id (should match tag ID for EVE)
-      state (UP, DOWN/PUSHED)
-      x coord
-      y coord
-      width
-      height
-      text size/font
-      pointer to button text
-      text color
+    { button attributes structure (longs)
+        ID: button id (for EVE: should match tag ID set with tag_attach() )
+        ST: state (UP, DOWN/PUSHED)
+        SX: x coord
+        SY: y coord
+        WD: width
+        HT: height
+        TSZ: text size/font
+        OPT: button options (for EVE: flat or 3D effect)
+        PSTR: pointer to button text
+        TCOLOR: text color
     }
-    #0, ID, ST, SX, SY, WD, HT, TSZ, OPT, PSTR, TCOLOR
-    STRUCTSZ    = (TCOLOR+1)
+
+    { use the last enum as the size (equal to the number of enums before it) }
+    #0, ID, ST, SX, SY, WD, HT, TSZ, OPT, PSTR, TCOLOR, SIZEOF_BTN_STRUCT
+    BTN_BUFF_SZ = NR_BUTTONS * SIZEOF_BTN_STRUCT
 
 var
 
+    long _btn_buff[BTN_BUFF_SZ]
     long _ptr_btns, _nr_btns
     byte _spacing_x, _spacing_y
 
-pub init(ptr_btnbuff, nr_btns)
-' Initialize
-'   ptr_btnbuff: point to button(s) buffer
+{ call one of init() or init_ext_buff() from the parent object, first }
+
+pub init()
+' Initialize, using internal buffer
+'   NOTE: To change the maximum number of buttons, override NR_BUTTONS in the parent's
+'       declaration of this object. (OBJ btn: "gui.button" | NR_BUTTONS = #)
+    _ptr_btns := @_btn_buff
+    _nr_btns := NR_BUTTONS
+
+pub init_ext_buff(ptr_btnbuff, nr_btns)
+' Initialize, using external button buffer
+'   ptr_btnbuff: pointer to button(s) buffer (must be at least (nr_btns * BTN_BUFF_SZ) longs)
     _ptr_btns := ptr_btnbuff
     _nr_btns := nr_btns
 
 pub deinit{}
 ' Deinitialize
-    _ptr_btns := 0
-    _nr_btns := 0
+'   Clear used variable space to 0
+    longfill(@_btn_buff, 0, BTN_BUFF_SZ+2)
+    bytefill(@_ptr_btns, 0, 2)
 
 pub above(btn_nr): y
 ' Get coordinate immediately to the right of a button (including inter-button spacing)
@@ -57,33 +73,34 @@ pub below(btn_nr): y
 '   btn_nr: button to read coordinate of
     return get_ey(btn_nr) + _spacing_y
 
-pub destroy(btn_idx)
+pub destroy(btn_nr)
 ' Destroy a button definition
-    longfill(ptr(btn_idx), 0, STRUCTSZ)
+    longfill(ptr(btn_nr), 0, SIZEOF_BTN_STRUCT)
     
-pub get_attr(btn_idx, param): val
+pub get_attr(btn_nr, param): val
 ' Get button attribute
-'   btn_idx: button number
-'   param: attribute to modify
+'   btn_nr: button number
+'   param: attribute to read
 '   Returns: value for attribute
-    if (btn_idx => 1 and btn_idx =< _nr_btns) ' button idx 1-based so it maps 1:1 with tag #
-        return long[ptr(btn_idx)][param]
+    { button idx 1-based so it maps 1:1 with tag # }
+    if ( (btn_nr => 1) and (btn_nr =< _nr_btns) )
+        return long[ptr(btn_nr)][param]
 
-pub get_ex(btn_idx): c
+pub get_ex(btn_nr): c
 ' Get the ending X coordinate of the button, based on its starting coord and width
-    return (get_attr(btn_idx, SX) + get_attr(btn_idx, WD))
+    return (get_attr(btn_nr, SX) + get_attr(btn_nr, WD))
 
-pub get_ey(btn_idx): c
+pub get_ey(btn_nr): c
 ' Get the ending Y coordinate of the button, based on its starting coord and height
-    return (get_attr(btn_idx, SY) + get_attr(btn_idx, HT))
+    return (get_attr(btn_nr, SY) + get_attr(btn_nr, HT))
 
-pub get_sx(btn_idx): c
+pub get_sx(btn_nr): c
 ' Get the ending X coordinate of the button, based on its starting coord and width
-    return (get_attr(btn_idx, SX))
+    return (get_attr(btn_nr, SX))
 
-pub get_sy(btn_idx): c
+pub get_sy(btn_nr): c
 ' Get the ending X coordinate of the button, based on its starting coord and width
-    return (get_attr(btn_idx, SY))
+    return (get_attr(btn_nr, SY))
 
 pub left_of(btn_nr): x
 ' Get coordinate immediately to the left of a button (including inter-button spacing)
@@ -100,12 +117,12 @@ pub min_width(btn_nr): w
 
 pub ptr(btn_nr): p
 ' Get pointer to start of btn_nr's structure in button buffer
-    return _ptr_btns + ( ((btn_nr-1) * STRUCTSZ) * 4)
+    return _ptr_btns + ( ((btn_nr-1) * SIZEOF_BTN_STRUCT) * 4)
 
 pub ptr_e(btn_nr): p
 ' Get pointer to start of btn_nr's structure in button buffer
-'   Directly compatible with EVE ButtonPtr()
-    return _ptr_btns + ( ((btn_nr-1) * STRUCTSZ) * 4) + 8
+'   Directly compatible with EVE button_ptr()
+    return _ptr_btns + ( ((btn_nr-1) * SIZEOF_BTN_STRUCT) * 4) + 8
 
 pub right_of(btn_nr): x
 ' Get coordinate immediately to the right of a button (including inter-button spacing)
@@ -119,33 +136,34 @@ pub set_attr_all(param, val) | b
     repeat b from 1 to _nr_btns
         set_attr(b, param, val)
 
-pub set_attr(btn_idx, param, val)
+pub set_attr(btn_nr, param, val)
 ' Set button attribute
-'   btn_idx: button number
+'   btn_nr: button number
 '   param: attribute to modify
 '   val: new value for attribute
-    if (btn_idx => 1 and btn_idx =< _nr_btns) ' button idx 1-based so it maps 1:1 with tag #
-        long[ptr(btn_idx)][param] := val
+    { button idx 1-based so it maps 1:1 with tag # }
+    if ( (btn_nr => 1) and (btn_nr =< _nr_btns) )
+        long[ptr(btn_nr)][param] := val
 
-pub set_pos(btn_idx, x, y)
+pub set_pos(btn_nr, x, y)
 ' Set button position
-'   btn_idx: button number
+'   btn_nr: button number
 '   x, y: coordinates of upper-left button corner
-    set_attr(btn_idx, SX, x)
-    set_attr(btn_idx, SY, y)
+    set_attr(btn_nr, SX, x)
+    set_attr(btn_nr, SY, y)
 
 pub set_spacing(x, y)
 ' Set inter-button spacing
     _spacing_x := 0 #> x
     _spacing_y := 0 #> y
 
-pub set_sx(btn_idx, x)
+pub set_sx(btn_nr, x)
 ' Set starting X coordinate of button
-    set_attr(btn_idx, SX, x)
+    set_attr(btn_nr, SX, x)
 
-pub set_sy(btn_idx, y)
+pub set_sy(btn_nr, y)
 ' Set starting Y coordinate of button
-    set_attr(btn_idx, SY, y)
+    set_attr(btn_nr, SY, y)
 
 pub set_id_all(st_nr) | b
 ' Set ID attribute of all buttons in ascending order
@@ -153,10 +171,10 @@ pub set_id_all(st_nr) | b
     repeat b from 0 to _nr_btns-1
         set_attr((st_nr+b), ID, (st_nr+b))
 
-pub text_len(btn_idx): len
+pub text_len(btn_nr): len
 ' Get the length of the text string pointed to by the button definition
-'   btn_idx: button number
-    return strsize(get_attr(btn_idx, PSTR))
+'   btn_nr: button number
+    return strsize(get_attr(btn_nr, PSTR))
 
 DAT
 {
