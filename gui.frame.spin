@@ -1,3 +1,48 @@
+{
+    --------------------------------------------
+    Filename: gui.frame.spin
+    Author: Jesse Burt
+    Description: Object for managing display frames or surfaces
+        (EVE BT81x display-specific implementation)
+    Copyright (c) 2023
+    Started Jun 3, 2023
+    Updated Jun 3, 2023
+    See end of file for terms of use.
+    --------------------------------------------
+
+    Basic usage:
+
+    In the parent object/application, declare an instance of the EVE display driver, like:
+
+        OBJ eve: "display.lcd.bt81x"
+
+    Then declare an instance of this object for every frame/surface that needs to be rendered.
+    For example, suppose the parent object needs to draw two separate frames:
+
+        CON #0, LEFT_FRAME, RIGHT_FRAME     ' <- 0, 1
+        OBJ frame[2]: "gui.frame"
+
+    Then set up each instance with the position, dimensions, and EVE driver pointer:
+
+        frame[LEFT_FRAME].init(0, 0, 300, 480, @eve)
+        frame[RIGHT_FRAME].init(400, 0, 300, 480, @eve)
+
+    Finally, call draw() somewhere inside your display list:
+
+        repeat
+            eve.wait_rdy()
+            eve.dl_start()
+            eve.clear_color(0, 0, 0)
+            eve.clear()
+            frame[LEFT_FRAME].draw()
+            frame[RIGHT_FRAME].draw()
+            '
+            '... other display list commands here ...
+            '
+            eve.dl_end()
+
+}
+
 con
 
     { frame structure }
@@ -10,15 +55,19 @@ con
 
 obj
 
-    disp    = "display.lcd.bt81x"
+    disp=   "display.lcd.bt81x"                 ' "meta"-instance of EVE LCD driver
 
 var
 
-    long _instance
-    long _bg_color
-    word _surface[6]
-    word _sx, _sy
-    word _drw_sx, _drw_sy, _drw_ex, _drw_ey, _drw_w, _drw_h
+    long _disp_obj                              ' instance of display driver object
+    long _bg_color                              ' frame background color
+    word _surface[6]                            ' frame/surface structure
+
+    { positions and dimensions }
+    word _sx, _sy                               ' upper-left coordinates
+    word _drw_sx, _drw_sy                       ' drawable area start (start coords + grid size)
+    word _drw_ex, _drw_ey                       ' drawable area end (end coords - grid size)
+    word _drw_w, _drw_h                         ' drawable area size
     word _grid_sz                               ' set minimum spacing between things
 
 pub init(x, y, w, h, ptr_disp): p
@@ -40,7 +89,7 @@ pub init(x, y, w, h, ptr_disp): p
     _drw_ey := (y+h)-_grid_sz
     _drw_w := _drw_ex-_drw_sx
     _drw_h := _drw_ey-_drw_sy
-    _instance := ptr_disp
+    _disp_obj := ptr_disp
 
     return @_surface
 
@@ -51,23 +100,24 @@ pub bottom(): b
 pub draw()
 ' Use the display driver to draw the frame
 '   NOTE: init() must be called with the instance of a graphics driver
-    disp[_instance].widget_fgcolor(_bg_color)
-    disp[_instance].button( _surface[SX], _surface[SY], _surface[WIDTH], _surface[HEIGHT], ...
+    disp[_disp_obj].widget_fgcolor(_bg_color)
+    disp[_disp_obj].button( _surface[SX], _surface[SY], _surface[WIDTH], _surface[HEIGHT], ...
                             31, 0, 0)
-    disp[_instance].str( _surface[SX]+_grid_sz, _surface[SY], 26, 0, @"TEST")
 
     { clip the display to within the drawable area }
-    disp[_instance].scissor_rect( _drw_sx, _drw_sy, _drw_w, _drw_h )
+    disp[_disp_obj].scissor_rect( _drw_sx, _drw_sy, _drw_w, _drw_h )
 
-    { draw bounding box }
-'    disp[_instance].box( _drw_sx, _drw_sy, _drw_ex, _drw_ey, 0)
+    { draw bounding box (for debugging only) }
+#ifdef DEBUG
+    disp[_disp_obj].box( _drw_sx, _drw_sy, _drw_ex, _drw_ey, 0)
+#endif
 
 pub get_ex(): x
-
+' Get ending X coordinate of surface
     return _surface[EX]
 
 pub get_ey(): y
-
+' Get ending Y coordinate of surface
     return _surface[EY]
 
 pub get_h(): h
@@ -124,5 +174,24 @@ pub top(): b
 ' Get top coordinate of frame, plus the grid size
     return _surface[SY]+_grid_sz
 
+DAT
+{
+Copyright 2023 Jesse Burt
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+}
 
 

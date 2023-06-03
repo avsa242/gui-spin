@@ -5,7 +5,7 @@
     Description: EVE button management
     Copyright (c) 2023
     Started May 29, 2023
-    Updated May 29, 2023
+    Updated Jun 3, 2023
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -144,10 +144,6 @@ pub set_pos_dims(x, y, w, h)
     _height := 1 #> h '<# (surface[_surf_obj].bottom() - _sy)'XXX right now the max can be 0
     _ex := (_sx + _width)-1                     ' lower right coordinate
     _ey := (_sy + _height)-1
-
-pub bsy():r
-
-    return surface[_surf_obj].bottom()
 
 pub set_pushed_action(fptr)
 ' Attach an action to the button when it's pressed
