@@ -88,7 +88,7 @@ pub get_ey(): y
 ' Get the ending Y coordinate of the button, based on its starting coord and height
     return _ey
 
-pub get_sx(btn_nr): x
+pub get_sx(): x
 ' Get the ending X coordinate of the button, based on its starting coord and width
     return _sx
 
