@@ -6,7 +6,7 @@
         (EVE BT81x display-specific implementation)
     Copyright (c) 2023
     Started Jun 3, 2023
-    Updated Jun 3, 2023
+    Updated Jun 4, 2023
     See end of file for terms of use.
     --------------------------------------------
 
@@ -62,6 +62,7 @@ var
     long _disp_obj                              ' instance of display driver object
     long _bg_color                              ' frame background color
     word _surface[6]                            ' frame/surface structure
+    word _text                                  ' frame text (optional)
 
     { positions and dimensions }
     word _sx, _sy                               ' upper-left coordinates
@@ -103,6 +104,8 @@ pub draw()
     disp[_disp_obj].widget_fgcolor(_bg_color)
     disp[_disp_obj].button( _surface[SX], _surface[SY], _surface[WIDTH], _surface[HEIGHT], ...
                             31, 0, 0)
+    if ( _text )
+        disp[_disp_obj].str(_drw_sx, _drw_sy, 26, 0, _text)
 
     { clip the display to within the drawable area }
     disp[_disp_obj].scissor_rect( _drw_sx, _drw_sy, _drw_w, _drw_h )
@@ -165,6 +168,11 @@ pub set_sy(y)
     _surface[EY] := y+_surface[HEIGHT]
     _drw_sy := y + _grid_sz
     _drw_ey := (y + _surface[HEIGHT])-_grid_sz
+
+pub set_text(t)
+' Set pointer to (optional) frame title text
+'   (set to 0 to ignore)
+    _text := t
 
 pub set_w(w)
 ' Set the width of the frame
