@@ -199,6 +199,10 @@ pub set_text_pos_dims(p_str, x, y, w, h)
     _width := w
     _height := h
 
+pub set_text_size(sz)
+
+    _text_sz := sz
+
 pub set_text_size_color(p_str, sz, c)
 ' Set button text, text size, text color
     _text_str := p_str
