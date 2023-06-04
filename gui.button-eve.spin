@@ -133,7 +133,7 @@ pub set_dims(w, h)
     _ey := (_sy + _height)-1
 
 pub set_height(h)
-
+' Set button height
     _height := h
 
 pub set_pos(x, y)
@@ -205,14 +205,14 @@ pub set_text_color(c)
 ' Set button text color
     _text_color := c
 
-pub set_text_pos(p_str, x, y)
-' Set button text string, position
+pub set_text_and_pos(p_str, x, y)
+' Set button text string and button position
     _text_str := p_str
     _sx := surface[_surf_obj]._drw_sx + x
     _sy := surface[_surf_obj]._drw_sy + y
 
-pub set_text_pos_dims(p_str, x, y, w, h)
-' Set button text string, position, dimensions
+pub set_text_button_pos_dims(p_str, x, y, w, h)
+' Set button text string, button position and dimensions
     _text_str := p_str
     _sx := surface[_surf_obj]._drw_sx + x
     _sy := surface[_surf_obj]._drw_sy + y
@@ -230,7 +230,7 @@ pub set_text_size_color(p_str, sz, c)
     _text_color := c
 
 pub set_width(w)
-
+' Set button width
     _width := w
 
 pub change_state()
