@@ -127,6 +127,10 @@ pub set_dims(w, h)
     _ex := (_sx + _width)-1                     ' lower right coordinates
     _ey := (_sy + _height)-1
 
+pub set_height(h)
+
+    _height := h
+
 pub set_pos(x, y)
 ' Set button position
 '   x, y: coordinates of upper-left button corner
@@ -208,6 +212,10 @@ pub set_text_size_color(p_str, sz, c)
     _text_str := p_str
     _text_sz := sz
     _text_color := c
+
+pub set_width(w)
+
+    _width := w
 
 pub change_state()
 ' Change state of button
