@@ -5,7 +5,7 @@
     Description: EVE button management
     Copyright (c) 2023
     Started May 29, 2023
-    Updated Jun 3, 2023
+    Updated Jun 4, 2023
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -210,6 +210,8 @@ pub set_text_and_pos(p_str, x, y)
     _text_str := p_str
     _sx := surface[_surf_obj]._drw_sx + x
     _sy := surface[_surf_obj]._drw_sy + y
+    _ex := _sx + _width
+    _ey := _sy + _height
 
 pub set_text_button_pos_dims(p_str, x, y, w, h)
 ' Set button text string, button position and dimensions
