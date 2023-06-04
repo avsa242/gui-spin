@@ -21,8 +21,8 @@ con
 var
 
     long _disp_obj                              ' point to instance of EVE LCD driver
-    long _action                                ' action (function) bound to button press
-    long _surf_obj                               ' surface to render to
+    long _action, _released_action              ' action (function) bound to button press
+    long _surf_obj                              ' surface to render to
 
     { button attributes }
     long _bg_color
@@ -42,6 +42,9 @@ obj
     disp=       "display.lcd.bt81x"             ' EVE LCD driver
     surface=    "gui.frame"                     ' surface
 
+pub null()
+' This is not a top-level object
+
 pub init(button_id, init_st, bg_clr, surfc, disp)
 ' Initialize/set up the button
 '   button_id: ID # of button (tag ID-1)
@@ -55,6 +58,8 @@ pub init(button_id, init_st, bg_clr, surfc, disp)
     _surf_obj := surfc                          ' pointer to gui frame instance
     _disp_obj := disp                           ' pointer to EVE driver instance
     wordmove(@_surf_sx, _surf_obj, 4)           ' copy position and dims of surface
+    _action := _released_action := @null        ' no action by default to avoid crashes in the case
+                                                '   of no defined function pointer
 
 pub deinit{}
 ' Deinitialize
@@ -150,9 +155,16 @@ pub set_pos_dims(x, y, w, h)
     _ey := (_sy + _height)-1
 
 pub set_pushed_action(fptr)
-' Attach an action to the button when it's pressed
+' Attach an action to the button when it's pressed (transition from RELEASED to PUSHED)
+'   (pushed event callback)
 '   fptr: pointer to function
     _action := fptr
+
+pub set_released_action(fptr)
+' Attach an action to the button when it's released (transition from PUSHED to RELEASED)
+'   (released event callback)
+'   fptr: pointer to function
+    _released_action := fptr
 
 pub set_render_opt(o)
 ' Set rendering option
@@ -172,14 +184,18 @@ pub set_sy(y)
 ' Set starting Y coordinate of button
     _sy := surface[_surf_obj]._drw_sx + y
 
-pub set_state(st)
+pub set_state(new_state)
 ' Set state of button
 '   st: UP (0), DOWN/PUSHED (1)
 '   NOTE: The bound action will be called if state is DOWN/PUSHED
-    if ( (st == PUSHED) and (_state <> PUSHED) )
+    if ( (new_state == PUSHED) and (_state == UP) )
         _opt := disp[_disp_obj].OPT_FLAT
         _action()
-        _state := st
+    elseif ( (new_state == RELEASED) and (_state == PUSHED) )
+        _opt := disp[_disp_obj].OPT_3D
+        _released_action()
+
+    _state := new_state
 
 pub set_text(p_str)
 ' Set button text string
