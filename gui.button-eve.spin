@@ -220,6 +220,8 @@ pub set_text_button_pos_dims(p_str, x, y, w, h)
     _sy := surface[_surf_obj]._drw_sy + y
     _width := w
     _height := h
+    _ex := _sx + _width
+    _ey := _sy + _height
 
 pub set_text_size(sz)
 
