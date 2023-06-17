@@ -1,0 +1,198 @@
+{
+    --------------------------------------------
+    Filename: gui.battery-gauge.spin
+    Author: Jesse Burt
+    Description: Battery gauge GUI widget
+    Copyright (c) 2023
+    Started Jun 16, 2023
+    Updated Jun 16, 2023
+    See end of file for terms of use.
+    --------------------------------------------
+
+    Requirements:
+        a display driver that provides the following interfaces:
+            con MAX_COLOR = xxx (xxx is the maximum possible color value the driver supports)
+            pub box(sx, sy, ex, ey, color, fill_flag)
+            pub line(sx, sy, ex, ey, color)
+        build-time symbol DISP_DRIVER defined with the display driver filename
+        Example:
+            flexspin -DDISP_DRIVER=\"display.lcd.st7735\" -DST7789 -DGFX_DIRECT app.spin
+            (define DISP_DRIVER as the driver filename
+    Operational overview:
+        This object is first initialized with a pointer to your display driver's object
+        The battery gauge can then be drawn in either horizontal ( draw_horiz() ) or
+            vertical orientation ( draw_vert() ), respectively. The parameter is the
+            state of charge in whole percent (0..100).
+        The following attributes can optionally be changed:
+            set_bg_color(): set gauge inside fill/background color
+            set_bar_color(): set gauge bars color
+            set_outline_color(): set outline color of gauge
+            set_posxy(): set screen position of gauge
+            set_scale(): set drawing scale factor of gauge (whole numbers >= 1)
+            The defaults are:
+                * color 0 background (usually black)
+                * the display's MAX_COLOR as the gauge outline color
+                * screen position (0, 0)
+                * scale factor 1
+
+        Example:
+
+        obj
+
+            lcd:        DISP_DRIVER
+            batt_gauge: "gui.battery-gauge"
+
+        pub main()
+
+            batt_gauge.attach_display_driver(@lcd)
+            ' or the following, for short:
+            ' batt_gauge.attach(@lcd)
+}
+
+con
+
+    { battery image basic dimensions }
+    BWID    = 4
+    BLEN    = 10
+
+obj
+
+    { virtual instance of display driver }
+    disp= DISP_DRIVER
+
+var
+
+    { pointer to display driver object }
+    long _driver
+
+    { batt gauge attributes }
+    long _bar_color, _bg_color, _outline_color
+    word _sx, _sy
+    byte _scale
+
+pub attach = attach_display_driver
+pub attach_display_driver(ptr)
+' Attach to a display driver instance
+'   ptr: pointer to display driver object
+    _driver := ptr
+
+    { set some defaults so settings methods don't have to be called }
+    _bar_color := disp[_driver].MAX_COLOR
+    _bg_color := 0
+    _outline_color := disp[_driver].MAX_COLOR
+    _sx := _sy := 0
+    _scale := 1
+
+pub draw_horiz(soc) | len, wid, i, in_rt, in_t, in_b, in_lt
+' Show battery gauge (horizontal)
+'   soc: state of charge to indicate, in percent
+    wid := (BWID * _scale)                      ' width/diameter and 
+    len := 11 #> (BLEN * _scale)                '   length of battery icon
+    in_lt := (_sx + 1)
+    in_rt := (_sx + len)-1
+    in_t := (_sy + 1)
+    in_b := (_sy + wid-1)
+
+    { battery outline, tip, inside fill }
+    disp[_driver].box(  _sx, _sy, ...
+                        _sx+len, _sy+wid, ...
+                        _outline_color, false )
+
+    disp[_driver].box(  in_rt+1, in_t+(wid/4), ...
+                        in_rt+1+_scale, in_b-(wid/4), ...
+                        _outline_color, true )
+
+    disp[_driver].box(  in_lt, in_t, ...
+                        in_rt, in_b, ...
+                        _bg_color, true )
+
+    { battery SoC }
+    soc /= 10
+    if ( soc )                                  ' don't waste time with the below if SoC is 0
+        repeat i from 0 to soc-1
+            if ( _scale > 1 )
+                disp[_driver].box(  in_lt + (i * _scale), (in_t + 1), ...
+                                    (in_lt + ((i+1) * _scale)-2), (in_b-1), ...
+                                    _bar_color, true )
+            else
+                disp[_driver].line( in_lt + i, in_t, ...
+                                    in_lt + i, in_b, ...
+                                    _bar_color )
+
+pub draw_vert(soc) | wid, len, in_lt, in_rt, in_b, in_t, i
+' Show battery gauge (vertical)
+'   soc: state of charge to indicate, in percent
+    wid := (BWID * _scale)
+    len := 11 #> (BLEN * _scale)
+    in_lt := (_sx + 1)
+    in_rt := (_sx + wid-1)
+    in_t := (_sy + _scale + 1)
+    in_b := (_sy + _scale + len-1)
+
+    { battery tip, outline, fill }
+    disp[_driver].box(  in_lt+(wid/4), _sy, ...
+                        in_rt-(wid/4), _sy+_scale, ...
+                        _outline_color, true )
+
+    disp[_driver].box(  _sx, _sy+_scale, ...
+                        _sx+wid, _sy+_scale+len, ...
+                        _outline_color, false )
+
+    disp[_driver].box(  in_lt, in_t, ...
+                        in_rt, in_b, ...
+                        _bg_color, true )
+
+    { battery SoC }
+    soc /= 10
+    if ( soc )                                  ' don't waste time with the below if SoC is 0
+        repeat i from 0 to soc-1
+            if ( _scale > 1 )
+                disp[_driver].box(  in_lt+1, (in_b - ((i+1) * _scale)+2), ...
+                                    in_rt-1, (in_b - (i * _scale)), ...
+                                    _bar_color, true )
+            else
+                disp[_driver].line( in_lt, in_b-i, ...
+                                    in_rt, in_b-i, ...
+                                    _bar_color )
+
+pub set_bg_color(c)
+' Set battery inside background/fill color
+    _bg_color := c
+
+pub set_bar_color(c)
+' Set battery state of charge bar color
+    _bar_color := c
+
+pub set_outline_color(c)
+' Set battery outline color
+    _outline_color := c
+
+pub set_posxy(x, y)
+' Set upper-left screen position of battery gauge
+    _sx := x
+    _sy := y
+
+pub set_scale(s)
+' Set drawing scale factor
+    _scale := 1 #> s                            ' clamp to minimum of 1
+
+DAT
+{
+Copyright 2023 Jesse Burt
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+}
+
