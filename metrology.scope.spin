@@ -62,6 +62,7 @@ var
     long _outline_color, _plot_color, _bg_color
 
     word _sx, _sy, _width, _height              ' scope position, dimensions
+    word _in_l, _in_t, _in_r, _in_b
     word _bottom, _right                        ' maximum coordinate edges
     word _ref_lvl
     byte _vscale
@@ -111,40 +112,48 @@ pub draw_inv_y_framed() | x
                                 _sy + _ref_lvl + (long[_ptr_smp][x] * _vscale), ...
                                 _plot_color )
 
-pub draw() | x
-' Draw an oscilloscope plot
+pub draw_buffer() | x, r
+' Draw an oscilloscope plot (sweep buffer)
 '   ref_lvl: reference level for plot
 '   c: color to plot
     disp[_disp_obj].box(_sx, _sy, _right, _bottom, _bg_color, true)
+    r := _in_b - _ref_lvl                       ' pre-calc vertical offset
+
     repeat x from 0 to _len
-        disp[_disp_obj].plot(   _sx + x, ...
-                                _bottom-_ref_lvl - (long[_ptr_smp][x] * _vscale), ...
+        disp[_disp_obj].plot(   _in_l + x, ...
+                                r - (long[_ptr_smp][x] * _vscale), ...
                                 _plot_color )
 
-pub draw_buffer_framed() | x
+pub draw_buffer_framed() | x, r
 ' Draw an oscilloscope plot (sweep buffer), framed
     disp[_disp_obj].box(_sx, _sy, _right, _bottom, _outline_color, false)
-    disp[_disp_obj].box(_sx+1, _sy+1, _right-1, _bottom-1, _bg_color, true)
+    disp[_disp_obj].box(_in_l, _in_t, _in_r, _in_b, _bg_color, true)
+    r := _in_b - _ref_lvl
+
     repeat x from 0 to _len
-        disp[_disp_obj].plot(   _sx + x, ...
-                                _bottom-_ref_lvl - (long[_ptr_smp][x] * _vscale), ...
+        disp[_disp_obj].plot(   _in_l + x, ...
+                                r - (long[_ptr_smp][x] * _vscale), ...
                                 _plot_color )
 
-pub draw_one() | x
+pub draw_one() | x, r
 ' Draw an oscilloscope plot (sweep full scope width, each dot re-reads sample pointer)
-    disp[_disp_obj].box(_sx+1, _sy+1, _right-1, _bottom-1, _bg_color, true)
-    repeat x from _sx+1 to _right-1
-        disp[_disp_obj].plot(   _sx + x, ...
-                                _bottom - _ref_lvl - (long[_ptr_smp] * _vscale), ...
+    disp[_disp_obj].box(_in_l, _in_t, _in_r, _in_b, _bg_color, true)
+    r := _in_b - _ref_lvl
+
+    repeat x from _in_l to _in_r
+        disp[_disp_obj].plot(   x, ...
+                                r - (long[_ptr_smp] * _vscale), ...
                                 _plot_color )
 
-pub draw_one_framed() | x
+pub draw_one_framed() | x, r
 ' Draw an oscilloscope plot (sweep full scope width, each dot re-reads sample pointer)
     disp[_disp_obj].box(_sx, _sy, _right, _bottom, _outline_color, false)
-    disp[_disp_obj].box(_sx+1, _sy+1, _right-1, _bottom-1, _bg_color, true)
-    repeat x from _sx+1 to _right-1
-        disp[_disp_obj].plot(   _sx + x, ...
-                                _bottom - _ref_lvl - (long[_ptr_smp] * _vscale), ...
+    disp[_disp_obj].box(_in_l, _in_t, _in_r, _in_b, _bg_color, true)
+    r := _in_b - _ref_lvl
+
+    repeat x from _in_l to _in_r
+        disp[_disp_obj].plot(   x, ...
+                                r - (long[_ptr_smp] * _vscale), ...
                                 _plot_color )
 
 pub set_bgcolor(c)
@@ -179,6 +188,10 @@ pub set_pos_dims(x, y, w, h)
     _height := h
     _bottom := (y + h)-1
     _right := (x + w)-1
+    _in_l := _sx+1
+    _in_r := _right-1
+    _in_t := _sy+1
+    _in_b := _bottom-1
 
 pub set_ref_level(l)
 ' Set reference level for oscilloscope plot
