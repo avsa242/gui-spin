@@ -141,6 +141,7 @@ pub draw_one() | x, r
     r := _in_b - _ref_lvl
 
     repeat x from _in_l to _in_r
+'        disp[_disp_obj].line(   x+1, _in_t, x+1, _in_b, 0 ) ' looks nicer than the box eraser, but much slower
         disp[_disp_obj].plot(   x, ...
                                 r - (long[_ptr_smp] * _vscale), ...
                                 _plot_color )
@@ -155,6 +156,22 @@ pub draw_one_framed() | x, r
         disp[_disp_obj].plot(   x, ...
                                 r - (long[_ptr_smp] * _vscale), ...
                                 _plot_color )
+
+pub dec_ref_level()
+' Decrease reference level (clamped to minimum of 0)
+    _ref_lvl := 0 #> (_ref_lvl-1)
+
+pub dec_vscale()
+' Decrease vertical scaling (clamped to minimum of 1)
+    _vscale := 1 #> (_vscale-1)
+
+pub inc_ref_level()
+' Increase reference level
+    _ref_lvl++
+
+pub inc_vscale()
+' Increase vertical scaling
+    _vscale++
 
 pub set_bgcolor(c)
 ' Set oscilloscope window background/fill color
