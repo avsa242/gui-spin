@@ -64,6 +64,7 @@ var
     word _sx, _sy, _width, _height              ' scope position, dimensions
     word _bottom, _right                        ' maximum coordinate edges
     word _ref_lvl
+    byte _vscale
 
 pub init(x, y, wid, ht, optr, ptr_samples, len)
 ' Initialize oscilloscope object
@@ -81,6 +82,7 @@ pub init(x, y, wid, ht, optr, ptr_samples, len)
     _outline_color := disp[_disp_obj].MAX_COLOR
     _plot_color := disp[_disp_obj].MAX_COLOR
     _bg_color := 0
+    _vscale := 1
 
 pub attach = attach_display_driver
 pub attach_display_driver(ptr)
@@ -95,7 +97,7 @@ pub draw_inv_y(ref_lvl, c) | x
     disp[_disp_obj].box(_sx+1, _sy+1, _right-1, _bottom-1, _bg_color, true)
     repeat x from 0 to _len
         disp[_disp_obj].plot(   _sx + x, ...
-                                _sy + _ref_lvl+long[_ptr_smp][x], ...
+                                _sy + _ref_lvl + (long[_ptr_smp][x] * _vscale), ...
                                 _plot_color )
 
 pub draw_inv_y_framed() | x
@@ -106,7 +108,7 @@ pub draw_inv_y_framed() | x
     disp[_disp_obj].box(_sx+1, _sy+1, _right-1, _bottom-1, _bg_color, true)
     repeat x from 0 to _len
         disp[_disp_obj].plot(   _sx + x, ...
-                                _sy + _ref_lvl + long[_ptr_smp][x], ...
+                                _sy + _ref_lvl + (long[_ptr_smp][x] * _vscale), ...
                                 _plot_color )
 
 pub draw() | x
@@ -116,7 +118,7 @@ pub draw() | x
     disp[_disp_obj].box(_sx, _sy, _right, _bottom, _bg_color, true)
     repeat x from 0 to _len
         disp[_disp_obj].plot(   _sx + x, ...
-                                _bottom-_ref_lvl-long[_ptr_smp][x], ...
+                                _bottom-_ref_lvl - (long[_ptr_smp][x] * _vscale), ...
                                 _plot_color )
 
 pub draw_buffer_framed() | x
@@ -125,7 +127,7 @@ pub draw_buffer_framed() | x
     disp[_disp_obj].box(_sx+1, _sy+1, _right-1, _bottom-1, _bg_color, true)
     repeat x from 0 to _len
         disp[_disp_obj].plot(   _sx + x, ...
-                                _bottom-_ref_lvl-long[_ptr_smp][x], ...
+                                _bottom-_ref_lvl - (long[_ptr_smp][x] * _vscale), ...
                                 _plot_color )
 
 pub draw_one() | x
@@ -133,7 +135,7 @@ pub draw_one() | x
     disp[_disp_obj].box(_sx+1, _sy+1, _right-1, _bottom-1, _bg_color, true)
     repeat x from _sx+1 to _right-1
         disp[_disp_obj].plot(   _sx + x, ...
-                                _bottom - _ref_lvl - long[_ptr_smp], ...
+                                _bottom - _ref_lvl - (long[_ptr_smp] * _vscale), ...
                                 _plot_color )
 
 pub draw_one_framed() | x
@@ -142,7 +144,7 @@ pub draw_one_framed() | x
     disp[_disp_obj].box(_sx+1, _sy+1, _right-1, _bottom-1, _bg_color, true)
     repeat x from _sx+1 to _right-1
         disp[_disp_obj].plot(   _sx + x, ...
-                                _bottom - _ref_lvl - long[_ptr_smp], ...
+                                _bottom - _ref_lvl - (long[_ptr_smp] * _vscale), ...
                                 _plot_color )
 
 pub set_bgcolor(c)
@@ -182,6 +184,9 @@ pub set_ref_level(l)
 ' Set reference level for oscilloscope plot
     _ref_lvl := l
 
+pub set_vscale(s)
+' Set vertical scale factor
+    _vscale := s
 
 DAT
 {
