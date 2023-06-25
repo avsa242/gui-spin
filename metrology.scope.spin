@@ -5,7 +5,7 @@
     Author: Jesse Burt
     Copyright (c) 2023
     Created: May 26, 2023
-    Updated: Jun 17, 2023
+    Updated: Jun 25, 2023
     See end of file for terms of use.
     --------------------------------------------
 
@@ -60,6 +60,9 @@ var
     long _ptr_smp, _len                         ' pointer to sample buffer, and length of
 
     long _outline_color, _plot_color, _bg_color
+
+    long _htime
+    long _trig_lvl
 
     word _sx, _sy, _width, _height              ' scope position, dimensions
     word _in_l, _in_t, _in_r, _in_b
@@ -137,14 +140,14 @@ pub draw_buffer_framed() | x, r
 
 pub draw_one() | x, r
 ' Draw an oscilloscope plot (sweep full scope width, each dot re-reads sample pointer)
-    disp[_disp_obj].box(_in_l, _in_t, _in_r, _in_b, _bg_color, true)
+'    disp[_disp_obj].box(_in_l, _in_t, _in_r, _in_b, _bg_color, true)
     r := _in_b - _ref_lvl
-
     repeat x from _in_l to _in_r
 '        disp[_disp_obj].line(   x+1, _in_t, x+1, _in_b, 0 ) ' looks nicer than the box eraser, but much slower
         disp[_disp_obj].plot(   x, ...
                                 r - (long[_ptr_smp] * _vscale), ...
                                 _plot_color )
+        waitcnt(cnt+_htime)
 
 pub draw_one_framed() | x, r
 ' Draw an oscilloscope plot (sweep full scope width, each dot re-reads sample pointer)
@@ -157,6 +160,21 @@ pub draw_one_framed() | x, r
                                 r - (long[_ptr_smp] * _vscale), ...
                                 _plot_color )
 
+pub draw_one_triggered_hi() | x, r
+' Draw an oscilloscope plot (sweep full scope width, each dot re-reads sample pointer)
+'    disp[_disp_obj].box(_in_l, _in_t, _in_r, _in_b, _bg_color, true)
+    r := _in_b - _ref_lvl
+    repeat until long[_ptr_smp] => _trig_lvl
+    repeat x from _in_l to _in_r
+        disp[_disp_obj].plot(   x, ...
+                                r - (long[_ptr_smp] * _vscale), ...
+                                _plot_color )
+        waitcnt(cnt+_htime)
+
+pub dec_horiz_time()
+' Decrease horizontal timescale
+    _htime := 1000 #> _htime-1_000
+
 pub dec_ref_level()
 ' Decrease reference level (clamped to minimum of 0)
     _ref_lvl := 0 #> (_ref_lvl-1)
@@ -164,6 +182,10 @@ pub dec_ref_level()
 pub dec_vscale()
 ' Decrease vertical scaling (clamped to minimum of 1)
     _vscale := 1 #> (_vscale-1)
+
+pub inc_horiz_time()
+' Increase horizontal timescale
+    _htime += 1_000
 
 pub inc_ref_level()
 ' Increase reference level
@@ -183,6 +205,10 @@ pub set_dims(w, h)
 '   h: height
     _width := w
     _height := h
+
+pub set_horiz_time(v)
+' Set horizontal timescale
+    _htime := v
 
 pub set_outline_color(c)
 ' Set outline color for framed oscilloscope plots
@@ -213,6 +239,10 @@ pub set_pos_dims(x, y, w, h)
 pub set_ref_level(l)
 ' Set reference level for oscilloscope plot
     _ref_lvl := l
+
+pub set_trigger_level(l)
+' Set threshold for triggering oscilloscope plot
+    _trig_lvl := l
 
 pub set_vscale(s)
 ' Set vertical scale factor
