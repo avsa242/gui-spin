@@ -8,18 +8,19 @@ This is a P8X32A/Propeller, P2X8C4M64P/Propeller 2 library of GUI-related elemen
 
 ## Salient Features
 
-* Scrollable text window (for ANSI serial terminals)
-* Touchscreen button metadata and drawing (for EVE displays)
-* Battery gauge widget
-* GUI frame display (for EVE displays)
-* Generic oscilloscope renderer
 * Object-oriented - can be attached at the application level to any compatible display driver
-
+* Scrollable text window (for ANSI serial terminals)
+* Touchscreen button management (for EVE displays)
+* Battery gauge widget
+* GUI frame widget (for EVE displays)
+* Oscilloscope plot
+* Frequency spectrum plot using FFT
 
 ## Requirements
 
 P1/SPIN1:
 * spin-standard-library
+* metrology.spectrum.spin: [dsp.fft.spin](https://github.com/avsa242/propeller-dsp-spin)
 
 P2/SPIN2:
 * p2-spin-standard-library

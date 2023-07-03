@@ -1,0 +1,224 @@
+{
+    --------------------------------------------
+    Filename: metrology.spectrum.spin
+    Description: Frequency spectrum plot widgets using FFT
+    Author: Jesse Burt
+    Copyright (c) 2023
+    Created: May 26, 2023
+    Updated: Jun 25, 2023
+    See end of file for terms of use.
+    --------------------------------------------
+
+    Requirements:
+        a display driver that provides the following interfaces:
+            con MAX_COLOR = xxx (xxx is the maximum possible color value the driver supports)
+            pub box(sx, sy, ex, ey, color, fill_flag)
+            pub plot(x, y, color)
+        build-time symbol DISP_DRIVER defined with the display driver filename in escaped quotes
+        Example:
+            flexspin -DDISP_DRIVER=\"display.lcd.st7735\" -DST7789 -DGFX_DIRECT app.spin
+    Operational overview:
+        This object is first initialized with:
+            * screen position
+            * spectrum plot dimensions
+            * pointer to display driver
+            * pointer to sample(s) to plot
+            * length of the sample buffer
+        The spectrum can then be drawn in buffered or unbuffered mode.
+
+        Example:
+
+        obj
+
+            disp:   DISP_DRIVER
+            spec:   "metrology.spectrum"
+
+        var
+
+            long _sample
+
+        pub main() | x, y, width, height, obj_ptr, ptr_samples, len
+
+            ' NOTE: variables provided only to show the function of each parameter
+            x := y := 0
+            width := height := 100
+            obj_ptr := @disp
+            ptr_samples := @_sample             ' point to sample(s)
+            len := 1                            ' length of sample buffer
+            spec.init(x, y, width, height, obj_ptr, ptr_samples, len)
+            fill_input()
+
+            ' one of the below
+            spec.draw_plot()
+            'spec.draw_line()
+            disp.show()
+
+        pub fill_input() | k, r, i
+            r := spec.ptr_real()
+            i := spec.ptr_imag()
+            repeat k from 0 to (fft.FFT_SIZE-1)
+                if k & %1000
+                    long[r][k] := 1023
+                else
+                    long[r][k] := -1023
+                long[i][k] := 0
+}
+con
+
+    { number of points in the FFT (default 1024) - can be overriden in the parent }
+    FFT_SZ    = 1024
+
+obj
+
+    disp=   DISP_DRIVER
+    fft:    "dsp.fft" | FFT_SIZE=FFT_SZ
+
+var
+
+    long _disp_obj
+
+    long _ptr_smp, _len                         ' pointer to sample buffer, and length of
+
+    long _outline_color, _plot_color, _bg_color
+
+    long _spec_xscale, _spec_yscale
+
+    word _sx, _sy, _width, _height              ' scope position, dimensions
+    word _in_l, _in_t, _in_r, _in_b
+    word _bottom, _right                        ' maximum coordinate edges
+
+    { FFT input data }
+    long bx[FFT_SZ]
+    long by[FFT_SZ]
+
+    { mailbox interface to fft }
+    long _fft_mailbox_cmd                       ' Command
+    long _fft_mailbox_bxp                       ' Address of x buffer
+    long _fft_mailbox_byp                       ' Address of y buffer
+
+pub init(x, y, wid, ht, optr, ptr_samples, len)
+' Initialize spectrum plot object
+'   (x, y): spectrum position (upper-left)
+'   (wid, ht): spectrum window dimensions, in pixels
+'   optr: pointer to display driver object
+'   ptr_samples: pointer to samples to plot
+'   len: length of sample buffer
+    attach(optr)
+    _ptr_smp := ptr_samples
+    _len := len-1
+    set_pos_dims(x, y, wid, ht)
+
+    { default to black background with white outline and plot colors }
+    _outline_color := disp[_disp_obj].MAX_COLOR
+    _plot_color := disp[_disp_obj].MAX_COLOR
+    _bg_color := 0
+    fft.start(@_fft_mailbox_cmd)                 ' start the FFT engine
+
+pub attach = attach_display_driver
+pub attach_display_driver(ptr)
+' Attach to a display driver's drawing primitive functions
+'   ptr: pointer to display driver's drawing functions
+    _disp_obj := ptr
+
+pub calc_dft()
+' Calculate Discrete Fourier Transform
+    fft.butterflies(fft#CMD_DECIMATE | fft#CMD_BUTTERFLY | fft#CMD_MAGNITUDE, @bx, @by)
+
+pub draw_line() | pt, x, xscl
+' Draw the spectrum using lines from the bottom-up
+    xscl := _spec_xscale
+    repeat pt from 0 to (fft.FFT_SIZE-1)
+        x := pt/xscl
+        disp[_disp_obj].line(x, _bottom, x, _bottom-(bx[pt]/_spec_yscale), _plot_color)
+
+pub draw_plot() | pt, xscl
+' Draw the spectrum using dots
+    xscl := _spec_xscale                         ' copy to local for speedup when building to PASM
+    repeat pt from 0 to (fft.FFT_SIZE-1)
+        disp[_disp_obj].plot(pt/xscl, _bottom-(bx[pt]/_spec_yscale), _plot_color)
+
+pub ptr_real(): p
+' Pointer to FFT (real) data
+    return @bx
+
+pub ptr_imag(): p
+' Pointer to FFT (imaginary) data
+    return @by
+
+pub set_xscale(xs)
+' Scale the spectrum X (horizontal) axis
+    if ( xs )
+        _spec_xscale := xs
+    else
+        { if nothing (0) specified, just scale automatically by the number of FFT points and the
+            width of the spectrum plot }
+        _spec_xscale := (fft.FFT_SIZE / _width)
+
+pub set_yscale(ys)
+' Scale the spectrum Y (vertical) axis
+    if ( ys )
+        _spec_yscale := ys
+    else
+        { if nothing (0) specified, just scale automatically by the FFT amplitude range and the
+            heightof the spectrum plot }
+        _spec_yscale := (fft.FFT_RANGE / _height)
+
+pub set_bgcolor(c)
+' Set spectrum window background/fill color
+    _bg_color := c
+
+pub set_dims(w, h)
+' Set spectrum dimensions, in pixels
+'   w: width
+'   h: height
+    _width := w
+    _height := h
+
+pub set_outline_color(c)
+' Set outline color for framed spectrum plots
+    _outline_color := c
+
+pub set_plot_color(c)
+' Set spectrum plot color
+    _plot_color := c
+
+pub set_pos(x, y)
+' Set spectrum position
+    _sx := x
+    _sy := y
+
+pub set_pos_dims(x, y, w, h)
+' Set position and dimensions of spectrum plot
+    _sx := x
+    _sy := y
+    _width := w
+    _height := h
+    _bottom := (y + h)-1
+    _right := (x + w)-1
+    _in_l := _sx+1
+    _in_r := _right-1
+    _in_t := _sy+1
+    _in_b := _bottom-1
+    set_xscale(0)                               ' 0 = set automatically according to the above
+    set_yscale(0)
+
+DAT
+{
+Copyright 2023 Jesse Burt
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+}
+
