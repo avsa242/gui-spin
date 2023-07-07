@@ -1,0 +1,174 @@
+{
+    --------------------------------------------
+    Filename: Mic-SpectrumDemo-VGA.spin2
+    Description: Demo of the spectrum object
+        * Input data from an electret mic (sampled by P2 smart-pin ADC)
+        * Draw on QVGA
+    Author: Jesse Burt
+    Copyright (c) 2023
+    Created: Jul 6, 2023
+    Updated: Jun 7, 2023
+    See end of file for terms of use.
+    --------------------------------------------
+
+    See metrology.scope.spin2 for instructions on building
+}
+CON
+
+    _clkfreq    = cfg._clkfreq_def
+    _xtlfreq    = cfg._xtlfreq
+
+' -- User-modifiable constants
+    SER_BAUD    = 2_000_000
+
+    { QVGA configuration }
+    VGA_BASEPIN = 32
+    WIDTH       = 320
+    HEIGHT      = 240
+
+    { Electret microphone }
+    MIC_PIN     = 10
+    MIC_SRATE   = 48_000                        ' Hz
+    MIC_GAIN    = 1                             ' 1, 3, 10, 100
+    MIC_BIAS    = 0
+' --
+
+    XMAX        = WIDTH-1
+    YMAX        = HEIGHT-1
+
+OBJ
+
+    cfg:    "boardcfg.p2eval"
+    disp:   "display.vga.bitmap-8bpp"
+    ser:    "com.serial.terminal.ansi"
+    spec:   "metrology.spectrum"
+    mic:    "signal.adc.audio"
+
+VAR
+
+    long _smp                                   ' sample input for FFT
+    long _bias                                  ' bias offset for mic
+    byte _fb[WIDTH*HEIGHT]
+
+PUB main() | s, e, smin, scurr, smax, us
+
+    setup()
+    mic.start(MIC_PIN, MIC_SRATE, MIC_GAIN)
+    _bias := MIC_BIAS
+{' check the output of this while the mic hears nothing to see the DC offset (use to set MIC_BIAS)
+    longfill(@smin, 0, 3)
+    repeat
+        ser.pos_xy(0,3)
+        scurr := mic.adc_smp16()
+        smin := smin <# scurr
+        smax := smax #> scurr
+        ser.printf(@"min: %05.5d  curr: %05.5d  max: %05.5d", smin, scurr, smax)
+}
+    disp.bgcolor(0)
+    disp.clear()
+    spec.init(0, 0, 320, 200, @disp, @_smp, 1)
+    spec.set_plot_color(255)
+    spec.set_bgcolor(0)
+    us := clkfreq/1_000_000
+    repeat
+        disp.clear()
+        fill_input()
+'        s := getct()
+        spec.calc_dft()
+'        e := getct()-s
+'        ser.printf(@"dft=%dus\n\r", e/us)
+'        s := getct()
+        spec.draw_line()
+'        spec.draw_plot()
+'        e := getct()-s
+'        ser.printf(@"plot=%dus\n\r", e/us)
+        disp.wait_vsync()
+'        disp.show()
+
+PUB fill_input() | r, i, k
+
+    r := spec.ptr_real()
+    i := spec.ptr_imag()
+    repeat k from 0 to (spec.FFT_SZ-1)
+        long[r][k] := mic.adc_smp16()-_bias
+        long[i][k] := 0
+
+
+{
+' test data
+    repeat k from 0 to (spec.FFT_SZ-1)
+        if k & %1000
+            long[r][k] := 1023
+        else
+            long[r][k] := -1023
+        long[i][k] := 0
+}
+
+
+PUB setup()
+
+    ser.start(SER_BAUD)
+    waitms(30)
+    ser.clear()
+    ser.strln(string("Serial terminal started"))
+
+    setup_palette()
+    disp.set_timings(10, 33, 16, 89, 85, 640)   ' adjust for your monitor
+    if ( disp.start(VGA_BASEPIN, WIDTH, HEIGHT, @_fb) )
+        ser.strln(@"QVGA driver started")
+    else
+        ser.strln(@"QVGA driver failed to start - halting")
+        repeat
+
+PRI setup_palette() | i, r, g, b, c, ptr_pal
+' Set up palette
+    r := 0
+    g := 0
+    b := 0
+    ptr_pal := disp.palette_ptr()
+    repeat i from 0 to disp.MAX_COLOR
+        c := 0 | (r << 16) | (g << 8) | b
+        long[ptr_pal][i] := c
+
+        case i
+            0..63:
+                r += 4
+                g := 0
+                b := 0
+            64..127:
+                r := 0
+                g += 4
+                b := 0
+            128..191:
+                r := 0
+                g := 0
+                b += 4
+            192..253:
+                r += 4
+                g += 4
+                b := 0
+            254..255:
+                r := 255
+                g := 255
+                b := 255
+
+DAT
+{
+Copyright 2023 Jesse Burt
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+}
+

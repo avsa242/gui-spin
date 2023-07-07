@@ -14,7 +14,7 @@ This is a P8X32A/Propeller, P2X8C4M64P/Propeller 2 library of GUI-related elemen
 * (P1): Battery gauge widget
 * (P1): GUI frame widget (for EVE displays)
 * (P1, P2): Oscilloscope plot
-* (P1): Frequency spectrum plot using FFT
+* (P1, P2): Frequency spectrum plot using FFT
 
 ## Requirements
 
@@ -24,6 +24,7 @@ P1/SPIN1:
 
 P2/SPIN2:
 * p2-spin-standard-library
+* metrology.spectrum.spin: [dsp.fft.spin2](https://github.com/avsa242/propeller-dsp-spin)
 
 
 ## Compiler Compatibility
@@ -33,7 +34,7 @@ P2/SPIN2:
 | P1        | SPIN1    | FlexSpin (6.1.1)       | Bytecode     | OK                    |
 | P1        | SPIN1    | FlexSpin (6.1.1)       | Native/PASM  | OK                    |
 | P2        | SPIN2    | FlexSpin (6.1.1)       | NuCode       | Not yet implemented   |
-| P2        | SPIN2    | FlexSpin (6.1.1)       | Native/PASM2 | WIP                   |
+| P2        | SPIN2    | FlexSpin (6.1.1)       | Native/PASM2 | OK                    |
 
 (other versions or toolchains not listed are __not supported__, and _may or may not_ work)
 
