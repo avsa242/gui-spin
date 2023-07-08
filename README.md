@@ -11,7 +11,7 @@ This is a P8X32A/Propeller, P2X8C4M64P/Propeller 2 library of GUI-related elemen
 * Object-oriented - can be attached at the application level to any compatible display driver
 * (P1): Scrollable text window (for ANSI serial terminals)
 * (P1): Touchscreen button management (for EVE displays)
-* (P1): Battery gauge widget
+* (P1, P2): Battery gauge widget
 * (P1): GUI frame widget (for EVE displays)
 * (P1, P2): Oscilloscope plot
 * (P1, P2): Frequency spectrum plot using FFT
