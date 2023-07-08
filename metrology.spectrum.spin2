@@ -1,11 +1,11 @@
 {
     --------------------------------------------
-    Filename: metrology.spectrum.spin
+    Filename: metrology.spectrum.spin2
     Description: Frequency spectrum plot widgets using FFT
     Author: Jesse Burt
     Copyright (c) 2023
     Created: May 26, 2023
-    Updated: Jun 25, 2023
+    Updated: Jul 8, 2023
     See end of file for terms of use.
     --------------------------------------------
 
@@ -81,7 +81,7 @@ obj
 
 var
 
-    long _disp_obj
+    long _drv
 
     long _ptr_smp, _len                         ' pointer to sample buffer, and length of
 
@@ -110,15 +110,15 @@ pub init(x, y, wid, ht, optr, ptr_samples, len)
     set_pos_dims(x, y, wid, ht)
 
     { default to black background with white outline and plot colors }
-    _outline_color := disp[_disp_obj].MAX_COLOR
-    _plot_color := disp[_disp_obj].MAX_COLOR
+    _outline_color := disp[_drv].MAX_COLOR
+    _plot_color := disp[_drv].MAX_COLOR
     _bg_color := 0
 
 pub attach = attach_display_driver
 pub attach_display_driver(ptr)
 ' Attach to a display driver's drawing primitive functions
 '   ptr: pointer to display driver's drawing functions
-    _disp_obj := ptr
+    _drv := ptr
 
 pub calc_dft()
 ' Calculate Discrete Fourier Transform
@@ -129,15 +129,15 @@ pub draw_line() | pt, x, xscl, yscl
     longmove(@xscl, @_spec_xscale, 2)
     repeat x from _in_l to _in_r
         pt := (x * xscl) / 1000
-        disp[_disp_obj].line(x, _bottom, x, _bottom-(bx[pt]/yscl), _plot_color)
-'        disp[_disp_obj].line(x, _in_t, x, _bottom-(bx[pt]/yscl)-1, 0) 'looks nice but slow
+        disp[_drv].line(x, _bottom, x, _bottom-(bx[pt]/yscl), _plot_color)
+'        disp[_drv].line(x, _in_t, x, _bottom-(bx[pt]/yscl)-1, 0) 'looks nice but slow
 
-pub draw_plot() | pt, x, xscl, yscl
+pub draw_plot() | pt, x, xscl, yscl, p
 ' Draw the spectrum using dots
     longmove(@xscl, @_spec_xscale, 2)
     repeat x from _in_l to _in_r
         pt := (x * xscl) / 1000
-        disp[_disp_obj].plot(x, _bottom-(bx[pt]/yscl), _plot_color)
+        disp[_drv].plot(x, _bottom-(bx[pt]/yscl), _plot_color)
 
 pub ptr_real(): p
 ' Pointer to FFT (real) data
