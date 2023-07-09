@@ -1,0 +1,181 @@
+{
+    --------------------------------------------
+    Filename: metrology.waterfall.spin2
+    Description: Waterfall plot widgets using FFT
+    Author: Jesse Burt
+    Copyright (c) 2023
+    Created: Jul 9, 2023
+    Updated: Jul 9, 2023
+    See end of file for terms of use.
+    --------------------------------------------
+
+    Requirements:
+        a display driver that provides the following interfaces:
+            con MAX_COLOR = xxx (xxx is the maximum possible color value the driver supports)
+            pub box(sx, sy, ex, ey, color, fill_flag)
+            pub plot(x, y, color)
+            pub scroll_down(left_edge, top_edge, right_edge, bottom_edge)
+        NOTE: A display driver with an 8-bit color depth or higher is strongly recommended for
+            best visual results.
+        build-time symbol DISP_DRIVER defined with the display driver filename in escaped quotes
+        (defaults to display.vga.bitmap-8bpp)
+        Example:
+            flexspin -DDISP_DRIVER=\"display.lcd.st7735\" -DST7789 -DGFX_DIRECT app.spin
+    Operational overview:
+        This object is first initialized with:
+            * screen position
+            * waterfall plot dimensions
+            * pointer to display driver
+            * pointer to sample(s) to plot
+            * length of the sample buffer
+
+        Example:
+
+        con
+
+            SMP_LEN = 320
+
+        obj
+
+            disp:   DISP_DRIVER
+            wfall:  "metrology.waterfall"
+
+        var
+
+            long _samples[SMP_LEN]
+
+        pub main() | x, y, width, height, obj_ptr, ptr_samples, len
+
+            ' NOTE: variables provided only to show the function of each parameter
+            ' NOTE: it's assumed that the _samples array contains data to plot
+            x := y := 0
+            width := SMP_LEN
+            height := 100
+            obj_ptr := @disp
+            ptr_samples := @_samples            ' point to sample(s)
+            len := SMP_LEN                      ' length of sample buffer
+            wfall.init(x, y, width, height, obj_ptr, ptr_samples, len)
+
+            ' one of the below
+            wfall.draw()
+            'wfall.draw_framed()
+
+            disp.show()
+
+}
+' default to the QVGA display driver if one isn't specified
+#ifndef DISP_DRIVER
+#define DISP_DRIVER "display.vga.bitmap-8bpp"
+#endif
+
+obj
+
+    { virtual instance of display driver }
+    disp=   DISP_DRIVER
+
+var
+
+    long _drv                                   ' pointer to display driver object
+
+    long _ptr_smp, _len                         ' pointer to sample buffer, and length of
+
+    long _outline_color                         ' for _framed() variant only
+
+    long _range_data                            ' input data range
+
+    long _wfall_xscale                          ' waterfall display sample data/x-axis scaling
+
+    word _color_scl                             ' input data range to color range scaling
+    word _sx, _sy, _width, _height              ' waterfall position, dimensions
+    word _in_l, _in_t, _in_r, _in_b
+    word _bottom, _right                        ' maximum coordinate edges
+
+pub init(x, y, wid, ht, optr, ptr_samples, len)
+' Initialize waterfall plot object
+'   (x, y): waterfall position (upper-left)
+'   (wid, ht): waterfall window dimensions, in pixels
+'   optr: pointer to display driver object
+'   ptr_samples: pointer to samples to plot
+'   len: length of sample buffer
+    attach(optr)
+    _ptr_smp := ptr_samples
+    _len := len-1
+    set_pos_dims(x, y, wid, ht)
+    set_xscale()
+    _outline_color := disp[_drv].MAX_COLOR
+
+pub attach = attach_display_driver
+pub attach_display_driver(ptr)
+' Attach to a display driver
+'   ptr: pointer to display driver object
+    _drv := ptr
+
+PUB draw() | x, y, c
+' Draw the waterfall
+    repeat x from _in_l to _in_r                ' draw each sample in the buffer
+        c := long[_ptr_smp][(x * _wfall_xscale)/1000]  ' lookup sample in array
+        disp[_drv].plot(x, _in_t, c/_color_scl)
+
+    { scroll the window down for the waterfall effect }
+    disp[_drv].scroll_down(_in_l, _in_t, _in_r, _in_b)
+
+PUB draw_framed() | x, y, c
+' Draw the waterfall (framed)
+    disp[_drv].box(_sx, _sy, _right, _bottom, _outline_color, false)
+    repeat x from _in_l to _in_r                ' draw each sample in the buffer
+        c := long[_ptr_smp][(x * _wfall_xscale)/1000]  ' lookup sample in array
+        disp[_drv].plot(x, _in_t, c/_color_scl)
+
+    { scroll the set region of the screen down for the waterfall effect }
+    disp[_drv].scrolldown(_in_l, _in_t, _in_r, _in_b)
+
+pub set_color_scale(c=0)
+' Set the scaling of color to the range of the input data being plotted
+'   c: scaling factor for the color
+'      or 0 to set automatically, based on the range of the input data versus the display driver's
+'       color range/maximum color (default if nothing specified)
+    if ( c )
+        _color_scl := c
+    else
+        _color_scl := (_range_data / disp[_drv].MAX_COLOR-1 )
+
+pub set_dims(w, h)
+' Set waterfall dimensions, in pixels
+'   w: width
+'   h: height
+    _width := w
+    _height := h
+
+pub set_outline_color(c)
+' Set outline color for framed waterfall plots
+    _outline_color := c
+
+pub set_pos(x, y)
+' Set waterfall position
+    _sx := x
+    _sy := y
+
+pub set_pos_dims(x, y, w, h)
+' Set position and dimensions of waterfall plot
+    _sx := x
+    _sy := y
+    _width := w
+    _height := h
+    _bottom := (y + h)-1
+    _right := (x + w)-1
+    _in_l := _sx+1
+    _in_r := _right-1
+    _in_t := _sy+1
+    _in_b := _bottom-1
+    set_xscale(0)                               ' 0 = set automatically according to the above
+
+pub set_xscale(xs=0)
+' Scale the waterfall X (horizontal) axis, in thousandths
+'   (e.g., 1_600 = 1.6x)
+    if ( xs )
+        _wfall_xscale := xs
+    else
+        { if nothing (0) specified, just scale automatically by the length of the sample buffer
+            and the width of the waterfall plot }
+        _wfall_xscale := ( (_len * 1_000) / _width )
+
