@@ -5,7 +5,7 @@
     Author: Jesse Burt
     Copyright (c) 2023
     Created: May 26, 2023
-    Updated: Jul 8, 2023
+    Updated: Jul 9, 2023
     See end of file for terms of use.
     --------------------------------------------
 
@@ -130,11 +130,26 @@ pub draw_line() | pt, x, xscl, yscl
     repeat x from _in_l to _in_r
         pt := (x * xscl) / 1000
         disp[_drv].line(x, _bottom, x, _bottom-(bx[pt]/yscl), _plot_color)
-'        disp[_drv].line(x, _in_t, x, _bottom-(bx[pt]/yscl)-1, 0) 'looks nice but slow
+
+pub draw_line_cleared() | pt, x, xscl, yscl
+' Draw the spectrum using lines from the bottom-up, with built-in window clearing
+    longmove(@xscl, @_spec_xscale, 2)
+    disp[_drv].box(_in_l, _in_t, _in_r, _in_b, _bg_color, true)
+    repeat x from _in_l to _in_r
+        pt := (x * xscl) / 1000
+        disp[_drv].line(x, _bottom, x, _bottom-(bx[pt]/yscl), _plot_color)
 
 pub draw_plot() | pt, x, xscl, yscl, p
 ' Draw the spectrum using dots
     longmove(@xscl, @_spec_xscale, 2)
+    repeat x from _in_l to _in_r
+        pt := (x * xscl) / 1000
+        disp[_drv].plot(x, _bottom-(bx[pt]/yscl), _plot_color)
+
+pub draw_plot_cleared() | pt, x, xscl, yscl, p
+' Draw the spectrum using dots, with built-in window clearing
+    longmove(@xscl, @_spec_xscale, 2)
+    disp[_drv].box(_in_l, _in_t, _in_r, _in_b, _bg_color, true)
     repeat x from _in_l to _in_r
         pt := (x * xscl) / 1000
         disp[_drv].plot(x, _bottom-(bx[pt]/yscl), _plot_color)

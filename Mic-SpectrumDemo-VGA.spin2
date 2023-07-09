@@ -7,11 +7,11 @@
     Author: Jesse Burt
     Copyright (c) 2023
     Created: Jul 6, 2023
-    Updated: Jun 7, 2023
+    Updated: Jul 9, 2023
     See end of file for terms of use.
     --------------------------------------------
 
-    See metrology.scope.spin2 for instructions on building
+    See metrology.spectrum.spin2 for instructions on building
 }
 CON
 
@@ -71,15 +71,15 @@ PUB main() | s, e, smin, scurr, smax, us
     spec.set_bgcolor(0)
     us := clkfreq/1_000_000
     repeat
-        disp.clear()
+'        disp.clear()
         fill_input()
 '        s := getct()
         spec.calc_dft()
 '        e := getct()-s
 '        ser.printf(@"dft=%dus\n\r", e/us)
 '        s := getct()
-        spec.draw_line()
-'        spec.draw_plot()
+        spec.draw_line_cleared()
+'        spec.draw_plot_cleared()
 '        e := getct()-s
 '        ser.printf(@"plot=%dus\n\r", e/us)
         disp.wait_vsync()
