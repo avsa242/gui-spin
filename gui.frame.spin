@@ -72,6 +72,7 @@ var
     word _drw_w, _drw_h                         ' drawable area size
     word _grid_sz                               ' set minimum spacing between things
 
+    word _render_opt                            ' frame rendering option
     byte _text_sz
 
 var long _null_ptr                              ' pointer to null()
@@ -101,6 +102,7 @@ pub init(x, y, w, h, ptr_disp): p
     _text_sz := 26
     _null_ptr := @null                          ' point to null() by default
     _drw_func := _null_ptr
+    _render_opt := disp.OPT_FLAT
     return @_surface
 
 pub bottom(): b
@@ -116,7 +118,7 @@ pub draw()
 '   NOTE: init() must be called with the instance of a graphics driver
     disp[_disp_obj].widget_fgcolor(_bg_color)
     disp[_disp_obj].button( _surface[SX], _surface[SY], _surface[WIDTH], _surface[HEIGHT], ...
-                            31, 0, 0)
+                            31, _render_opt, 0)
     if ( _text )
         disp[_disp_obj].str(_drw_sx, _drw_sy, _text_sz, 0, _text)
 
@@ -174,6 +176,16 @@ pub set_draw_function(ptr)
 pub set_h(h)
 ' Set the height of the frame
     _surface[HEIGHT] := h
+
+pub set_rendering_option(o)
+' Set frame rendering option
+'   Valid values:
+'       0: 3D appearance
+'       non-zero: flat appearance
+    if ( o )
+        _render_opt := disp.OPT_FLAT
+    else
+        _render_opt := disp.OPT_3D
 
 pub set_sx(x)
 ' Set the x/upper-left coordinate of the frame
