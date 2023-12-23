@@ -60,6 +60,7 @@ obj
 var
 
     long _disp_obj                              ' instance of display driver object
+    long _drw_func                              ' pointer to optional function call within draw()
     long _bg_color                              ' frame background color
     word _surface[6]                            ' frame/surface structure
     word _text                                  ' frame text (optional)
@@ -72,6 +73,10 @@ var
     word _grid_sz                               ' set minimum spacing between things
 
     byte _text_sz
+
+var long _null_ptr                              ' pointer to null()
+pub null()
+' This is not a top-level object
 
 pub init(x, y, w, h, ptr_disp): p
 ' Initialize frame
@@ -94,12 +99,17 @@ pub init(x, y, w, h, ptr_disp): p
     _drw_h := _drw_ey-_drw_sy
     _disp_obj := ptr_disp
     _text_sz := 26
-
+    _null_ptr := @null                          ' point to null() by default
+    _drw_func := _null_ptr
     return @_surface
 
 pub bottom(): b
 ' Get bottom coordinate of frame, minus the grid size
     return _surface[EY]-_grid_sz
+
+pub clear_draw_function()
+' Clear the optional _drw_func function pointer
+    _drw_func := @null
 
 pub draw()
 ' Use the display driver to draw the frame
@@ -109,6 +119,9 @@ pub draw()
                             31, 0, 0)
     if ( _text )
         disp[_disp_obj].str(_drw_sx, _drw_sy, _text_sz, 0, _text)
+
+    if ( _drw_func <> _null_ptr )
+        _drw_func()
 
     { clip the display to within the drawable area }
     disp[_disp_obj].scissor_rect( _drw_sx, _drw_sy, _drw_w, _drw_h )
@@ -153,6 +166,10 @@ pub right(): b
 pub set_bgcolor(c)
 ' Set the background color of the frame
     _bg_color := c
+
+pub set_draw_function(ptr)
+' Set pointer to optional external function to call when draw() is called
+    _drw_func := ptr
 
 pub set_h(h)
 ' Set the height of the frame
