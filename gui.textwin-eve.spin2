@@ -1,0 +1,164 @@
+{
+----------------------------------------------------------------------------------------------------
+    Filename:       gui.textwin-eve.spin2
+    Description:    Text window widget (EVE)
+    Author:         Jesse Burt
+    Started:        Sep 15, 2024
+    Updated:        Sep 15, 2024
+    Copyright (c) 2024 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
+}
+
+CON
+
+    _clkfreq    = 250_000_000
+    _xtlfreq    = 20_000_000
+
+' -- User-modifiable constants
+    BRIGHTNESS  = 100                           ' Initial brightness (0..128)
+
+' --
+
+#include "eve3-lcdtimings.800x480.spinh"
+
+
+obj
+
+    str:    "string"
+    ser:    "com.serial.terminal.ansi" | SER_BAUD=2_000_000
+    eve:    "display.lcd.bt81x" | CS=0, SCK=1, MOSI=2, MISO=3, RST=4, SPI_FREQ=20_000_000
+'   NOTE: Pull RST high (tip: tie to Propeller reset) and define as -1 if unused
+
+
+dat
+
+'    text_file file "RFC 793-TCP.txt"
+'    text_file file "metrology.scope.spin2"
+    text_file file "t2.spin2"
+
+con
+
+    COLS    = 72
+    ROWS    = 10
+
+
+PUB main() | txt_ptr, txt_len, p, err[129]
+
+    setup()
+    eve.preset_high_perf()
+    eve.set_brightness(BRIGHTNESS)
+
+
+    txt_ptr := @text_file
+    txt_len := strsize(txt_ptr)
+    ser.printf(@"len=%d\n\r", txt_len)
+    ser.printf(@"ptr=%05.5x\n\r", txt_ptr)
+    repeat
+        eve.wait_rdy()
+        eve.dl_start()
+            eve.clear_color(0, 0, 0)
+            eve.clear()
+            p := text_window(0, 0, COLS, ROWS, $40_40_40, $ff_ff_ff, 18, txt_ptr)
+        eve.dl_end()
+        if ( eve.coproc_err() )
+            bytefill(@err, 0, 129)
+            eve.rd_err(@err)
+            ser.strln(@err)
+        txt_ptr += COLS
+        if ( txt_ptr > (txt_len-COLS) )
+            ser.strln(@"limit")
+            txt_ptr := @text_file
+
+
+con MAX_COLS=COLS
+pub text_window(sx, sy, w, h, bc, tc, fn, p_txt): p | fw, fh, w_px, h_px, x, y, ln, byte b_line[MAX_COLS+1], c, ch
+' Draw a text window
+'   x, y:   upper-left coordinates of corner of window (in _pixels_)
+'   w, h:   width, height (in _text_ columns and rows) of window
+'   bc:     window border/background color (RGB24)
+'   tc:     text color (RGB24)
+'   fn:     EVE font handle number (fixed-width fonts only)
+'   p_txt:  pointer to text buffer to draw
+'   Returns:
+'       number of bytes processed
+    p := p_txt
+    fw := eve.glyph_width(fn, " ")
+    fh := eve.glyph_height(fn)
+    w_px := (w*fw)
+    h_px := (h*fh)
+
+    eve.color_rgb24(bc)
+    eve.box(sx, sy, sx+(w_px+1), sy+(h_px+1), true) ' draw window
+
+    x := sx
+    y := sy
+    x++
+    y++
+
+    eve.scissor_rect(x, y, w_px, h_px)           ' clip all drawing to within the box
+    eve.text_wrap_wid(w_px-1)
+
+    ln := 0
+    'ser.printf(@"initial ptr: %05.5x\n\r", p)
+    'ser.printf(@"w is %d\n\r", w)
+    repeat while ( ln < h )                     ' for each line/row of the text window...
+        c := 0
+        bytefill(@b_line, 0, MAX_COLS)          ' clear temporary line buffer
+        repeat
+            ch := byte[p++]                     ' get next char from source buffer
+            case_fast ch
+                ser.LF:                         ' line-feed?
+                    x := sx+1                   '   go to the start of
+                    y += fh                     '       the next line
+                    bytefill(@b_line+c, 32, (w-c)-1)
+                    'ser.hexdump(@b_line, 0, 2, w, 16)
+                    ln++                        '   increment the line counter
+                    quit
+                ser.FF:                         ' ignore these characters
+                    next
+                other:                          ' displayable characters
+                    'ser.printf(@"c=%d\n\r", c)
+                    b_line[c++] := ch
+'            ser.strln(@"looping")
+        while ( c < w )
+        'ser.strln(@"out")
+        eve.color_rgb24(tc)
+        'ser.hexdump(@b_line, 0, 2, w, 16)
+        eve.str(x, y, fn, eve.OPT_FILL, @b_line)' show the line of text
+    'ser.printf(@"final ptr: %05.5x (diff %d)\n\r", p, p-p_txt)
+    return p-p_txt
+
+
+PUB setup()
+
+    ser.start()
+    ser.clear()
+    ser.strln(@"Serial terminal started")
+
+    if ( eve.start(@_disp_setup) )
+        ser.strln(@"BT81x driver started")
+    else
+        ser.str(@"BT81x driver failed to start - halting")
+        repeat
+
+
+DAT
+{
+Copyright 2024 Jesse Burt
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+}
+
