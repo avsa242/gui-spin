@@ -1,0 +1,65 @@
+#include "gui.common.spin2"
+
+
+obj
+
+    ser:    "com.serial.terminal.ansi" | SER_BAUD=2_000_000
+    disp:   "display.lcd.bt81x"
+    gui:    "gui"
+
+
+var
+
+    surface_s   surface
+    button_s    button
+
+
+pub main()
+
+    ser.start()
+    ser.clear()
+    ser.strln(@"started")
+
+    gui.init_surface(surface, @disp, @draw_surface, 0, 0, 800, 480, 5, 5)
+    ser.printf(@"surface =      %x\n\r", @surface)
+    ser.printf(@"disp =         %x\n\r", surface.p_dispobj)
+    ser.printf(@"draw_surface = %x\n\r", surface.draw)
+    ser.printf(@"x =            %d\n\r", surface.x)
+    ser.printf(@"y =            %d\n\r", surface.y)
+    ser.printf(@"w =            %d\n\r", surface.w)
+    ser.printf(@"h =            %d\n\r", surface.h)
+    ser.printf(@"xgrid_sz =     %d\n\r", surface.xgrid_sz)
+    ser.printf(@"ygrid_sz =     %d\n\r", surface.ygrid_sz)
+
+    ser.newline()
+
+    gui.add_button(@surface, button, @disp.button, 0, 0, 100, 25, $70_70_70, $ff_ff_ff, @"Testing")
+    ser.printf(@"button =       %x\n\r", @button)
+    ser.printf(@"surface =      %x\n\r", button.widget.p_surface)
+    ser.printf(@"draw =         %x\n\r", button.draw)
+    ser.printf(@"x =            %d\n\r", button.widget.x)
+    ser.printf(@"y =            %d\n\r", button.widget.y)
+    ser.printf(@"w =            %d\n\r", button.widget.w)
+    ser.printf(@"h =            %d\n\r", button.widget.h)
+    ser.printf(@"bgcolor =      %06.6x\n\r", button.widget.bgcolor)
+    ser.printf(@"fgcolor =      %06.6x\n\r", button.widget.fgcolor)
+    ser.printf(@"txt =          '%s'\n\r", button.p_txt)
+
+
+
+    repeat
+
+    
+
+    surface.draw()
+    button.draw(button.widget.x, button.widget.y, ...
+                    button.widget.x+button.widget.w, button.widget.y+button.widget.h, ...
+                    31, ...
+                    disp.OPT_3D, ...
+                    button.p_txt )
+
+
+pub draw_surface()
+
+    disp.box(surface.x, surface.y, surface.x+surface.w, surface.y+surface.h, true)
+

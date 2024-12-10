@@ -1,0 +1,28 @@
+#include "gui.common.spin2"
+
+
+pub init_surface(^surface_s surf, p_disp, p_drw, x, y, w, h, xg, yg): s
+
+    surf.p_dispobj := p_disp
+    surf.draw := p_drw
+    surf.x := x
+    surf.y := y
+    surf.w := w
+    surf.h := h
+    surf.xgrid_sz := xg
+    surf.ygrid_sz := yg
+
+
+pub add_button(p_surf, ^button_s btn, p_drw, x, y, w, h, bg, fg, p_txt)
+
+    btn.widget.p_surface := p_surf
+    btn.widget.x := x
+    btn.widget.y := y
+    btn.widget.w := w
+    btn.widget.h := h
+    btn.widget.bgcolor := bg
+    btn.widget.fgcolor := fg
+    btn.draw := p_drw
+    btn.p_txt := p_txt
+
+

@@ -183,7 +183,6 @@ pub draw_one() | x, r
                             _plot_color )
         waitx(_htime)
 
-
 pub draw_one_framed() | x, r
 ' Draw an oscilloscope plot
 '   Each plot re-reads the same sample pointer
@@ -256,7 +255,7 @@ pub draw_one_triggered_hi() | x, r
 
 pub dec_horiz_time()
 ' Decrease horizontal timescale
-    _htime := 1000 #> _htime-1_000
+    _htime := _htime-1'1000 #> _htime-1_000
 
 
 pub dec_ref_level()
@@ -271,7 +270,7 @@ pub dec_trigger_level()
 
 pub inc_horiz_time()
 ' Increase horizontal timescale
-    _htime += 1_000
+    _htime += 1'1_000
 
 
 pub inc_ref_level()
