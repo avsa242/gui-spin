@@ -3,9 +3,9 @@
     Filename: gui.button-eve.spin
     Author: Jesse Burt
     Description: EVE button management
-    Copyright (c) 2023
+    Copyright (c) 2024
     Started May 29, 2023
-    Updated Jun 4, 2023
+    Updated Jan 7, 2025
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -28,7 +28,6 @@ var
     long _bg_color
     long _text_str, _text_color
 
-    word _surf_sx, _surf_sy, _surf_w, _surf_h   'xxx type? like root, frame, etc? does it matter?
     word _sx, _sy, _ex, _ey, _width, _height, _opt
     word _state
 
@@ -45,7 +44,7 @@ obj
 pub null()
 ' This is not a top-level object
 
-pub init(button_id, init_st, bg_clr, surfc, disp)
+pub init(button_id, init_st, bg_clr, surfc, p_disp)
 ' Initialize/set up the button
 '   button_id: ID # of button (tag ID-1)
 '   init_st: initial state of button
@@ -56,8 +55,7 @@ pub init(button_id, init_st, bg_clr, surfc, disp)
     _bg_color := bg_clr
 
     _surf_obj := surfc                          ' pointer to gui frame instance
-    _disp_obj := disp                           ' pointer to EVE driver instance
-    wordmove(@_surf_sx, _surf_obj, 4)           ' copy position and dims of surface
+    _disp_obj := p_disp                         ' pointer to EVE driver instance
     _action := _released_action := @null        ' no action by default to avoid crashes in the case
                                                 '   of no defined function pointer
 
