@@ -1,28 +1,99 @@
-#include "gui.common.spin2"
+{
+----------------------------------------------------------------------------------------------------
+    Filename:       gui.spin2
+    Description:    Graphical User Interface elements
+    Author:         Jesse Burt
+    Started:        Mar 24, 2025
+    Updated:        Mar 24, 2025
+    Copyright (c) 2025 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
+}
+#include "gui.common.spin2"                     ' use code common to GUI elements
+
+obj
+
+    disp=   DISP_DRIVER
 
 
-pub init_surface(^surface_s surf, p_disp, p_drw, x, y, w, h, xg, yg): s
+var
 
-    surf.p_dispobj := p_disp
-    surf.draw := p_drw
-    surf.x := x
-    surf.y := y
-    surf.w := w
-    surf.h := h
-    surf.xgrid_sz := xg
-    surf.ygrid_sz := yg
+    long driver                                 ' pointer to display driver object instance
 
 
-pub add_button(p_surf, ^button_s btn, p_drw, x, y, w, h, bg, fg, p_txt)
+pub attach_display(p_disp)
+' Attach a display driver object
+'   p_disp: pointer to object
+    driver := p_disp
 
-    btn.widget.p_surface := p_surf
-    btn.widget.x := x
-    btn.widget.y := y
-    btn.widget.w := w
-    btn.widget.h := h
-    btn.widget.bgcolor := bg
-    btn.widget.fgcolor := fg
-    btn.draw := p_drw
-    btn.p_txt := p_txt
 
+pub add_button(^button_s btn, n, x, y, w, h, bg, fg, p_text)
+' Inititalize/set up a button
+'   btn:    pointer to button structure
+'   n:      button id
+'   x, y:   display coordinates
+'   p_text: button text string
+    btn.params.x := x
+    btn.params.y := y
+    btn.p_text := p_text
+    btn.params.bgcolor := bg
+    btn.params.fgcolor := fg
+
+    ' set button dimensions per calling params, but limit the minimum size according to the
+    '   text size
+    btn.params.w := w #> (strsize(p_text) * disp[driver]._charcell_w)
+    btn.params.h := h #> disp[driver]._charcell_h
+    btn.state := RELEASED
+
+
+pub destroy_button(^button_s btn)
+' Clear a button structure
+'   btn:    button structure to clear
+    btn~
+
+
+pub draw_button(^button_s btn) | tx, ty
+' Draw a button
+'   btn:    button structure to draw
+
+    ' find the center of the button using the button dims and the font dims
+    tx :=   (btn.params.x + (btn.params.w / 2) ) - ...
+            ( (disp[driver]._charcell_w * strsize(btn.p_text) ) / 2) + 1
+    ty := (btn.params.y + (btn.params.h / 2) ) - (disp[driver].font_height() / 2) + 1
+
+    ' draw the button in its current state
+    case btn.state
+        RELEASED:
+            disp[driver].box(   btn.params.x, btn.params.y, ...
+                                (btn.params.x+btn.params.w), (btn.params.y+btn.params.h), ...
+                                btn.params.bgcolor, false)
+            disp[driver].fgcolor(btn.params.fgcolor)
+        PUSHED:
+            disp[driver].box(   btn.params.x, btn.params.y, ...
+                                (btn.params.x+btn.params.w), (btn.params.y+btn.params.h), ...
+                                btn.params.fgcolor, true)
+            disp[driver].fgcolor(btn.params.bgcolor)
+
+    disp[driver].pos_xy(tx, ty)
+    disp[driver].puts(btn.p_text)
+
+
+DAT
+{
+Copyright (c) 2025 Jesse Burt
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+}
 
