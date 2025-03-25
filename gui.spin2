@@ -20,6 +20,10 @@ var
     long driver                                 ' pointer to display driver object instance
 
 
+pub null()
+' This is not a top-level object
+
+
 pub attach_display(p_disp)
 ' Attach a display driver object
 '   p_disp: pointer to object
@@ -34,15 +38,19 @@ pub add_button(^button_s btn, n, x, y, w, h, bg, fg, p_text)
 '   p_text: button text string
     btn.params.x := x
     btn.params.y := y
-    btn.p_text := p_text
     btn.params.bgcolor := bg
     btn.params.fgcolor := fg
+    btn.p_text := p_text
+
+    btn.press_action := @null
+    btn.lift_action := @null
+    btn.contact_action := @null
 
     ' set button dimensions per calling params, but limit the minimum size according to the
     '   text size
     btn.params.w := w #> (strsize(p_text) * disp[driver]._charcell_w)
     btn.params.h := h #> disp[driver]._charcell_h
-    btn.state := RELEASED
+    btn.state := NO_EVENT
 
 
 pub destroy_button(^button_s btn)
@@ -62,19 +70,49 @@ pub draw_button(^button_s btn) | tx, ty
 
     ' draw the button in its current state
     case btn.state
-        RELEASED:
-            disp[driver].box(   btn.params.x, btn.params.y, ...
-                                (btn.params.x+btn.params.w), (btn.params.y+btn.params.h), ...
-                                btn.params.bgcolor, false)
-            disp[driver].fgcolor(btn.params.fgcolor)
-        PUSHED:
+        PRESSED_DOWN:
             disp[driver].box(   btn.params.x, btn.params.y, ...
                                 (btn.params.x+btn.params.w), (btn.params.y+btn.params.h), ...
                                 btn.params.fgcolor, true)
             disp[driver].fgcolor(btn.params.bgcolor)
-
+            if ( btn.press_action <> @null )
+                btn.press_action()
+        LIFTED:
+            disp[driver].box(   btn.params.x, btn.params.y, ...
+                                (btn.params.x+btn.params.w), (btn.params.y+btn.params.h), ...
+                                btn.params.bgcolor, true)
+            disp[driver].fgcolor(btn.params.fgcolor)
+            if ( btn.lift_action <> @null )
+                btn.lift_action()
+        CONTACTED:
+            disp[driver].box(   btn.params.x, btn.params.y, ...
+                                (btn.params.x+btn.params.w), (btn.params.y+btn.params.h), ...
+                                btn.params.fgcolor, true)
+            disp[driver].fgcolor(btn.params.bgcolor)
+            if ( btn.contact_action <> @null )
+                btn.contact_action()
+        NO_EVENT:
+            disp[driver].box(   btn.params.x, btn.params.y, ...
+                                (btn.params.x+btn.params.w), (btn.params.y+btn.params.h), ...
+                                btn.params.bgcolor, true)
+            disp[driver].fgcolor(btn.params.fgcolor)
     disp[driver].pos_xy(tx, ty)
     disp[driver].puts(btn.p_text)
+
+
+pub set_button_contact_action(^button_s btn, p_func)
+
+    btn.contact_action := p_func
+
+
+pub set_button_lift_action(^button_s btn, p_func)
+
+    btn.lift_action := p_func
+
+
+pub set_button_press_action(^button_s btn, p_func)
+
+    btn.press_action := p_func
 
 
 DAT

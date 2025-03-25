@@ -22,12 +22,19 @@ con
     ' </// buttons
     struct button_s(...
         widget_s    params, ...
+        long        press_action, ...
+        long        lift_action, ...
+        long        contact_action, ...
         long        p_text, ...
         byte        state)
 
     ' button states
-    RELEASED        = 0
-    PUSHED          = 1
+'    RELEASED        = 0
+'    PUSHED          = 1
+    PRESSED_DOWN    = 0
+    LIFTED          = 1
+    CONTACTED       = 2
+    NO_EVENT        = 3
     ' ///>
 
 
