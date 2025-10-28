@@ -1,13 +1,12 @@
 {
-    --------------------------------------------
-    Filename: metrology.spectrum.spin
-    Description: Frequency spectrum plot widgets using FFT
-    Author: Jesse Burt
-    Copyright (c) 2023
-    Created: May 26, 2023
-    Updated: Jun 25, 2023
-    See end of file for terms of use.
-    --------------------------------------------
+----------------------------------------------------------------------------------------------------
+    Filename:       metrology.spectrum.spin
+    Description:    Frequency spectrum plot widgets using FFT
+    Author:         Jesse Burt
+    Started:        May 26, 2023
+    Updated:        Oct 28, 2025
+    Copyright (c) 2025 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
 
     Requirements:
         a display driver that provides the following interfaces:
@@ -63,19 +62,22 @@
                     long[r][k] := -1023
                 long[i][k] := 0
 }
+
 con
 
     { number of points in the FFT (default 1024) - can be overriden in the parent }
     FFT_SZ    = 1024
+
 
 obj
 
     disp=   DISP_DRIVER
     fft:    "dsp.fft" | FFT_SIZE=FFT_SZ
 
+
 var
 
-    long _disp_obj
+    long _drv
 
     long _ptr_smp, _len                         ' pointer to sample buffer, and length of
 
@@ -96,6 +98,7 @@ var
     long _fft_mailbox_bxp                       ' Address of x buffer
     long _fft_mailbox_byp                       ' Address of y buffer
 
+
 pub init(x, y, wid, ht, optr, ptr_samples, len)
 ' Initialize spectrum plot object
 '   (x, y): spectrum position (upper-left)
@@ -109,50 +112,141 @@ pub init(x, y, wid, ht, optr, ptr_samples, len)
     set_pos_dims(x, y, wid, ht)
 
     { default to black background with white outline and plot colors }
-    _outline_color := disp[_disp_obj].MAX_COLOR
-    _plot_color := disp[_disp_obj].MAX_COLOR
+    _outline_color := disp[_drv].MAX_COLOR
+    _plot_color := disp[_drv].MAX_COLOR
     _bg_color := 0
     fft.start(@_fft_mailbox_cmd)                 ' start the FFT engine
+
 
 pub attach = attach_display_driver
 pub attach_display_driver(ptr)
 ' Attach to a display driver's drawing primitive functions
 '   ptr: pointer to display driver's drawing functions
-    _disp_obj := ptr
+    _drv := ptr
+
 
 pub calc_dft()
 ' Calculate Discrete Fourier Transform
-    fft.butterflies(fft#CMD_DECIMATE | fft#CMD_BUTTERFLY | fft#CMD_MAGNITUDE, @bx, @by)
+    fft.butterflies(fft.CMD_DECIMATE | fft.CMD_BUTTERFLY | fft.CMD_MAGNITUDE, @bx, @by)
 
-pub draw_line() | pt, x, xscl
+
+pub draw_line() | pt, x, xscl, yscl
 ' Draw the spectrum using lines from the bottom-up
-    xscl := _spec_xscale
-    repeat pt from 0 to (fft.FFT_SIZE-1)
-        x := pt/xscl
-        disp[_disp_obj].line(x, _bottom, x, _bottom-(bx[pt]/_spec_yscale), _plot_color)
+    longmove(@xscl, @_spec_xscale, 2)
+    repeat x from _in_l to _in_r
+        pt := (x * xscl) / 1000
+        disp[_drv].line(x, _bottom, x, _bottom-(bx[pt]/yscl), _plot_color)
 
-pub draw_plot() | pt, xscl
+
+pub draw_line_cleared() | pt, x, xscl, yscl
+' Draw the spectrum using lines from the bottom-up, with built-in window clearing
+    longmove(@xscl, @_spec_xscale, 2)
+    disp[_drv].box(_in_l, _in_t, _in_r, _in_b, _bg_color, true)
+    repeat x from _in_l to _in_r
+        pt := (x * xscl) / 1000
+        disp[_drv].line(x, _bottom, x, _bottom-(bx[pt]/yscl), _plot_color)
+
+
+pub draw_plot() | pt, x, xscl, yscl, p
 ' Draw the spectrum using dots
-    xscl := _spec_xscale                         ' copy to local for speedup when building to PASM
-    repeat pt from 0 to (fft.FFT_SIZE-1)
-        disp[_disp_obj].plot(pt/xscl, _bottom-(bx[pt]/_spec_yscale), _plot_color)
+    longmove(@xscl, @_spec_xscale, 2)
+    repeat x from _in_l to _in_r
+        pt := (x * xscl) / 1000
+        disp[_drv].plot(x, _bottom-(bx[pt]/yscl), _plot_color)
+
+
+pub draw_plot_cleared() | pt, x, xscl, yscl, p
+' Draw the spectrum using dots, with built-in window clearing
+    longmove(@xscl, @_spec_xscale, 2)
+    disp[_drv].box(_in_l, _in_t, _in_r, _in_b, _bg_color, true)
+    repeat x from _in_l to _in_r
+        pt := (x * xscl) / 1000
+        disp[_drv].plot(x, _bottom-(bx[pt]/yscl), _plot_color)
+
+
+pub draw_plot_colormag(p_ctbl) | b, x, xscl, yscl, y, c, mag
+' Draw the spectrum using dots, using color from LUT to indicate the magnitude
+'   p_ctbl: pointer to table of longs (R8_G8_B8) defining color scale
+'           (greatest to least magnitude). Number of entries should match (or exceed)
+'           spectrum plot height.
+    longmove(@xscl, @_spec_xscale, 2)
+
+    repeat x from _in_l to _in_r
+        b := (x * xscl) / 1000                  ' FFT bin to grab data from (scaled)
+        mag := _bottom-(bx[b] / yscl)           ' get magnitude stored in it; scale to display
+        repeat y from _bottom to mag
+            c := long[p_ctbl][y]                ' get color for this height from the LUT
+            disp[_drv].plot(x, y, c)
+
 
 pub ptr_real(): p
 ' Pointer to FFT (real) data
     return @bx
 
+
 pub ptr_imag(): p
 ' Pointer to FFT (imaginary) data
     return @by
 
+
+pub set_bgcolor(c)
+' Set spectrum window background/fill color
+    _bg_color := c
+
+
+pub set_dims(w, h)
+' Set spectrum dimensions, in pixels
+'   w: width
+'   h: height
+    _width := w
+    _height := h
+
+
+pub set_outline_color(c)
+' Set outline color for framed spectrum plots
+    _outline_color := c
+
+
+pub set_plot_color(c)
+' Set spectrum plot color
+    _plot_color := c
+
+
+pub set_pos(x, y)
+' Set spectrum position
+    _sx := x
+    _sy := y
+
+
+pub set_pos_dims(x, y, w, h, hb=0, vb=0)
+' Set position and dimensions of spectrum plot
+'   (x, y):     upper-left corner of plot (pixel coordinates)
+'   (w, h):     dimensions of plot (pixels)
+'   (hb, vb):   horizontal, vertical inside border (optional; default is none)
+    _sx := x
+    _sy := y
+    _width := w
+    _height := h
+    _bottom := (y + h)-1
+    _right := (x + w)-1
+    _in_l := _sx+hb
+    _in_r := _right-hb
+    _in_t := _sy+vb
+    _in_b := _bottom-vb
+    set_xscale(0)                               ' 0 = set automatically according to the above
+    set_yscale(0)
+
+
 pub set_xscale(xs)
-' Scale the spectrum X (horizontal) axis
+' Scale the spectrum X (horizontal) axis, in thousandths
+'   (e.g., 1_600 = 1.6x)
     if ( xs )
         _spec_xscale := xs
     else
         { if nothing (0) specified, just scale automatically by the number of FFT points and the
             width of the spectrum plot }
-        _spec_xscale := (fft.FFT_SIZE / _width)
+        _spec_xscale := ( ((fft.FFT_SIZE/2) * 1_000) / _width )
+
 
 pub set_yscale(ys)
 ' Scale the spectrum Y (vertical) axis
@@ -163,48 +257,10 @@ pub set_yscale(ys)
             heightof the spectrum plot }
         _spec_yscale := (fft.FFT_RANGE / _height)
 
-pub set_bgcolor(c)
-' Set spectrum window background/fill color
-    _bg_color := c
 
-pub set_dims(w, h)
-' Set spectrum dimensions, in pixels
-'   w: width
-'   h: height
-    _width := w
-    _height := h
-
-pub set_outline_color(c)
-' Set outline color for framed spectrum plots
-    _outline_color := c
-
-pub set_plot_color(c)
-' Set spectrum plot color
-    _plot_color := c
-
-pub set_pos(x, y)
-' Set spectrum position
-    _sx := x
-    _sy := y
-
-pub set_pos_dims(x, y, w, h)
-' Set position and dimensions of spectrum plot
-    _sx := x
-    _sy := y
-    _width := w
-    _height := h
-    _bottom := (y + h)-1
-    _right := (x + w)-1
-    _in_l := _sx+1
-    _in_r := _right-1
-    _in_t := _sy+1
-    _in_b := _bottom-1
-    set_xscale(0)                               ' 0 = set automatically according to the above
-    set_yscale(0)
-
-DAT
+dat
 {
-Copyright 2023 Jesse Burt
+Copyright 2025 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
