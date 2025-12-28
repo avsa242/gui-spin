@@ -1,13 +1,11 @@
-{
-    --------------------------------------------
-    Filename: metrology.waterfall.spin2
-    Description: Waterfall plot widgets using FFT
-    Author: Jesse Burt
-    Copyright (c) 2023
-    Created: Jul 9, 2023
-    Updated: Jul 9, 2023
-    See end of file for terms of use.
-    --------------------------------------------
+{----------------------------------------------------------------------------------------------------
+    Filename:       metrology.waterfall.spin2
+    Description:    Waterfall plot widgets
+    Author:         Jesse Burt
+    Started:        Jul 9, 2023
+    Updated:        Dec 28, 2025
+    Copyright (c) 2025 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
 
     Requirements:
         a display driver that provides the following interfaces:
@@ -85,6 +83,8 @@ var
 
     long _wfall_xscale                          ' waterfall display sample data/x-axis scaling
 
+    long _ref_level
+
     word _color_scl                             ' input data range to color range scaling
     word _sx, _sy, _width, _height              ' waterfall position, dimensions
     word _in_l, _in_t, _in_r, _in_b
@@ -114,7 +114,7 @@ PUB draw() | x, y, c
 ' Draw the waterfall
     repeat x from _in_l to _in_r                ' draw each sample in the buffer
         c := long[_ptr_smp][(x * _wfall_xscale)/1000]  ' lookup sample in array
-        disp[_drv].plot(x, _in_t, c/_color_scl)
+        disp[_drv].plot(x, _in_t, (c/_color_scl) + _ref_level)
 
     { scroll the window down for the waterfall effect }
     disp[_drv].scroll_down(_in_l, _in_t, _in_r, _in_b)
@@ -169,6 +169,10 @@ pub set_pos_dims(x, y, w, h)
     _in_b := _bottom-1
     set_xscale(0)                               ' 0 = set automatically according to the above
 
+pub set_ref_level(l=0)
+' Set reference level for waterfall intensity
+    _ref_level := l
+
 pub set_xscale(xs=0)
 ' Scale the waterfall X (horizontal) axis, in thousandths
 '   (e.g., 1_600 = 1.6x)
@@ -178,4 +182,25 @@ pub set_xscale(xs=0)
         { if nothing (0) specified, just scale automatically by the length of the sample buffer
             and the width of the waterfall plot }
         _wfall_xscale := ( (_len * 1_000) / _width )
+
+
+dat
+{
+Copyright 2025 Jesse Burt
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+}
 
