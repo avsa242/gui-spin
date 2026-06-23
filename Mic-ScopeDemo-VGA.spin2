@@ -5,9 +5,9 @@
         * Input data from an electret mic (sampled by P2 smart-pin ADC)
         * Draw on QVGA display
     Author: Jesse Burt
-    Copyright (c) 2023
+    Copyright (c) 2026
     Created: Jul 5, 2023
-    Updated: Jun 5, 2023
+    Updated: Apr 26, 2026
     See end of file for terms of use.
     --------------------------------------------
 
@@ -59,15 +59,15 @@ PUB main()
     disp.bgcolor(0)
     disp.clear()
 
-    scope.init(0, 0, 320, 240, @disp, @_smp)
+    scope.init(0, 0, 320, 240, disp.MAX_COLOR, disp.MAX_COLOR, @_smp)
     scope.set_ref_level(32)                     ' scope reference level
     scope.set_horiz_time(clkfreq/MIC_SRATE)     ' set horizontal timescale
-    scope.set_data_scale(2048)                  ' max level expected from sample data
+    scope.set_vertical_scale(2048)              ' max level expected from sample data
     scope.set_trigger_level(0)                  ' wait until data is this high to draw
                                                 '   (scale is same as input data scale)
     repeat
         disp.clear()
-        scope.draw_one_triggered_hi()           ' trigger on high threshold
+        scope.draw_one_triggered_hi(@disp)      ' trigger on high threshold
 '        scope.draw_one()                        ' no triggering; display will "roll"
         disp.wait_vsync()
         disp.show()
@@ -112,7 +112,7 @@ PUB setup()
 
     setup_palette()
     disp.set_timings(10, 33, 16, 96, 48, 640)
-    if ( disp.start(VGA_BASEPIN, WIDTH, HEIGHT, @_fb) )
+    if ( disp.startx(VGA_BASEPIN, WIDTH, HEIGHT, @_fb) )
         ser.strln(@"QVGA driver started")
     else
         ser.strln(@"QVGA driver failed to start - halting")
@@ -166,7 +166,7 @@ PRI setup_palette() | i, r, g, b, c, ptr_pal
 
 DAT
 {
-Copyright 2023 Jesse Burt
+Copyright 2026 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
