@@ -69,12 +69,12 @@ PUB main() | s, e, smin, scurr, smax, us
     disp.clear()
 
     { set the spectrum plot to the top half of the screen and waterfall to the bottom }
-    spec.init(0, 0, 320, 120, @disp, @_smp, 1)
+    spec.init(0, 0, 320, 120, @_smp, 1)
     spec.set_plot_color(disp.MAX_COLOR)
     spec.set_bgcolor(0)
 '    spec.set_xscale(0_500)                     ' set lower to "zoom in" (0_500 = 0.500)
 
-    wfall.init(0, 120, 320, 120, @disp, spec.ptr_real(), spec.FFT_SZ)
+    wfall.init(0, 120, 320, 120, spec.ptr_real(), spec.FFT_SZ)
     wfall.set_xscale(spec._spec_xscale)         ' set to the same x-scale as the spectrum object
     wfall.set_color_scale(4096/disp.MAX_COLOR+1)' scale the waterfall colors to the input data
 
@@ -90,11 +90,11 @@ PUB main() | s, e, smin, scurr, smax, us
 '        s := getct()
 '        spec.draw_plot()                       ' use clear() above with these
 '        spec.draw_line()
-        spec.draw_line_cleared()                ' plot the spectrum
+        spec.draw_line_cleared(@disp)                ' plot the spectrum
 '        spec.draw_plot_cleared()
 '        e := getct()-s
 '        ser.printf(@"plot time=%dus\n\r", e/us)
-        wfall.draw()                            ' plot a waterfall
+        wfall.draw(@disp)                            ' plot a waterfall
         disp.wait_vsync()                       ' wait for display vertical refresh
 
 PUB fill_input() | r, i, k
@@ -126,7 +126,7 @@ PUB setup()
 
     setup_palette()
     disp.set_timings(10, 33, 16, 89, 85, 640)   ' adjust for your monitor
-    if ( disp.start(VGA_BASEPIN, WIDTH, HEIGHT, @_fb) )
+    if ( disp.startx(VGA_BASEPIN, WIDTH, HEIGHT, @_fb) )
         ser.strln(@"QVGA driver started")
     else
         ser.strln(@"QVGA driver failed to start - halting")

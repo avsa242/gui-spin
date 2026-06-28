@@ -66,7 +66,7 @@ PUB main() | s, e, smin, scurr, smax, us
 }
     disp.bgcolor(0)
     disp.clear()
-    spec.init(0, 0, 320, 200, @disp, @_smp, 1)
+    spec.init(0, 0, 320, 200, @_smp, 1)
     spec.set_plot_color(255)
     spec.set_bgcolor(0)
     us := clkfreq/1_000_000
@@ -78,7 +78,7 @@ PUB main() | s, e, smin, scurr, smax, us
 '        e := getct()-s
 '        ser.printf(@"dft=%dus\n\r", e/us)
 '        s := getct()
-        spec.draw_line_cleared()
+        spec.draw_line_cleared(@disp)
 '        spec.draw_plot_cleared()
 '        e := getct()-s
 '        ser.printf(@"plot=%dus\n\r", e/us)
@@ -114,7 +114,7 @@ PUB setup()
 
     setup_palette()
     disp.set_timings(10, 33, 16, 89, 85, 640)   ' adjust for your monitor
-    if ( disp.start(VGA_BASEPIN, WIDTH, HEIGHT, @_fb) )
+    if ( disp.startx(VGA_BASEPIN, WIDTH, HEIGHT, @_fb) )
         ser.strln(@"QVGA driver started")
     else
         ser.strln(@"QVGA driver failed to start - halting")

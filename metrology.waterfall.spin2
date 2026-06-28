@@ -61,15 +61,15 @@
             disp.show()
 
 }
-' default to the QVGA display driver if one isn't specified
-#ifndef DISP_DRIVER
-#define DISP_DRIVER "display.vga.bitmap-8bpp"
-#endif
+con
 
-obj
-
-    { virtual instance of display driver }
-    disp=   DISP_DRIVER
+    ' define the requirements of the display driver interface
+    %interface disp_i(
+        pub plot(x, y, c)
+        pub box(x1, y1, x2, y2, c, f)
+        pub line(x1, y1, x2, y2, c)
+        pub scroll_down(sx, sy, ex, ey)
+    )
 
 var
 
@@ -90,54 +90,43 @@ var
     word _in_l, _in_t, _in_r, _in_b
     word _bottom, _right                        ' maximum coordinate edges
 
-pub init(x, y, wid, ht, optr, ptr_samples, len)
+pub init(x, y, wid, ht, ptr_samples, len)
 ' Initialize waterfall plot object
 '   (x, y): waterfall position (upper-left)
 '   (wid, ht): waterfall window dimensions, in pixels
-'   optr: pointer to display driver object
 '   ptr_samples: pointer to samples to plot
 '   len: length of sample buffer
-    attach(optr)
     _ptr_smp := ptr_samples
     _len := len-1
     set_pos_dims(x, y, wid, ht)
     set_xscale()
-    _outline_color := disp[_drv].MAX_COLOR
 
-pub attach = attach_display_driver
-pub attach_display_driver(ptr)
-' Attach to a display driver
-'   ptr: pointer to display driver object
-    _drv := ptr
-
-PUB draw() | x, y, c
+PUB draw(^disp_i disp) | x, y, c
 ' Draw the waterfall
     repeat x from _in_l to _in_r                ' draw each sample in the buffer
         c := long[_ptr_smp][(x * _wfall_xscale)/1000]  ' lookup sample in array
-        disp[_drv].plot(x, _in_t, (c/_color_scl) + _ref_level)
+        disp.plot(x, _in_t, (c/_color_scl) + _ref_level)
 
     { scroll the window down for the waterfall effect }
-    disp[_drv].scroll_down(_in_l, _in_t, _in_r, _in_b)
+    disp.scroll_down(_in_l, _in_t, _in_r, _in_b)
 
-PUB draw_framed() | x, y, c
+PUB draw_framed(^disp_i disp) | x, y, c
 ' Draw the waterfall (framed)
-    disp[_drv].box(_sx, _sy, _right, _bottom, _outline_color, false)
+    disp.box(_sx, _sy, _right, _bottom, _outline_color, false)
     repeat x from _in_l to _in_r                ' draw each sample in the buffer
         c := long[_ptr_smp][(x * _wfall_xscale)/1000]  ' lookup sample in array
-        disp[_drv].plot(x, _in_t, c/_color_scl)
+        disp.plot(x, _in_t, c/_color_scl)
 
     { scroll the set region of the screen down for the waterfall effect }
-    disp[_drv].scrolldown(_in_l, _in_t, _in_r, _in_b)
+    disp.scroll_down(_in_l, _in_t, _in_r, _in_b)
 
-pub set_color_scale(c=0)
+pub set_color_scale(c)
 ' Set the scaling of color to the range of the input data being plotted
 '   c: scaling factor for the color
 '      or 0 to set automatically, based on the range of the input data versus the display driver's
 '       color range/maximum color (default if nothing specified)
     if ( c )
         _color_scl := c
-    else
-        _color_scl := (_range_data / disp[_drv].MAX_COLOR-1 )
 
 pub set_dims(w, h)
 ' Set waterfall dimensions, in pixels
