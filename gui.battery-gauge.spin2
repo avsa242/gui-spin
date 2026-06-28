@@ -50,21 +50,19 @@
 
 con
 
+    ' define the requirements of the display driver interface
+    %interface disp_i(
+        pub plot(x, y, c)
+        pub box(x1, y1, x2, y2, c, f)
+        pub line(x1, y1, x2, y2, c)
+    )
+
     ' battery image basic dimensions
     BATT_WID    = 4
     BATT_LEN    = 10
 
 
-obj
-
-    ' virtual instance of display driver
-    disp= DISP_DRIVER
-
-
 var
-
-    ' pointer to display driver object
-    long _driver
 
     ' batt gauge attributes
     long _bar_color, _bg_color, _outline_color
@@ -72,21 +70,7 @@ var
     byte _scale
 
 
-pub attach = attach_display_driver
-pub attach_display_driver(ptr)
-' Attach to a display driver instance
-'   ptr: pointer to display driver object
-    _driver := ptr
-
-    ' set some defaults so settings methods don't have to be called
-    _bar_color := disp[_driver].MAX_COLOR
-    _bg_color := 0
-    _outline_color := disp[_driver].MAX_COLOR
-    _sx := _sy := 0
-    _scale := 1
-
-
-pub draw_batt1_horiz(p) | c, ex, ey, l, s
+pub draw_batt1_horiz(^disp_i disp, p) | c, ex, ey, l, s
 ' Draw a battery gauge (horizontal layout)
 '   p:  state of charge (percent)
     p := (0 #> p <# 100) / 10
@@ -95,17 +79,17 @@ pub draw_batt1_horiz(p) | c, ex, ey, l, s
     l := (ex-_sx)                               ' get length (scaled) of battery
 
     ' draw the battery
-    disp[_driver].box(_sx, _sy, ex+1, ey, _outline_color, false)
-    disp[_driver].line(ex+2, _sy+1, ex+2, ey-1, _outline_color)
+    disp.box(_sx, _sy, ex+1, ey, _outline_color, false)
+    disp.line(ex+2, _sy+1, ex+2, ey-1, _outline_color)
 
     ' draw the state-of-charge
     s := p * (l / 10)                           ' scaled SoC bar/filled length
     if ( p )
         repeat c from 0 to s-1
-            disp[_driver].line(_sx+1+c, _sy+1, _sx+1+c, ey-1, _bar_color)
+            disp.line(_sx+1+c, _sy+1, _sx+1+c, ey-1, _bar_color)
 
 
-pub draw_batt1_vert(p) | c, ex, ey, l, s
+pub draw_batt1_vert(^disp_i disp, p) | c, ex, ey, l, s
 ' Draw a battery gauge (vertical layout)
 '   p:  state of charge (percent)
     p := (0 #> p <# 100) / 10
@@ -114,14 +98,14 @@ pub draw_batt1_vert(p) | c, ex, ey, l, s
     l := (ey-_sy)                               ' length of battery in pixels (after scaling)
 
     ' draw the battery
-    disp[_driver].box(_sx, _sy, ex, ey+1, _outline_color, false)
-    disp[_driver].line(_sx+1, _sy-1, ex-1, _sy-1, _outline_color)
+    disp.box(_sx, _sy, ex, ey+1, _outline_color, false)
+    disp.line(_sx+1, _sy-1, ex-1, _sy-1, _outline_color)
 
     ' draw the state-of-charge
     s := p * (l / 10)                           ' scaled SoC bar/filled length
     if ( p )
         repeat c from 0 to s-1
-            disp[_driver].line(_sx+1, ey-c, ex-1, ey-c, _bar_color)
+            disp.line(_sx+1, ey-c, ex-1, ey-c, _bar_color)
 
 
 pub set_bg_color(c)
