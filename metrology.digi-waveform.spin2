@@ -1,0 +1,117 @@
+{
+----------------------------------------------------------------------------------------------------
+    Filename:       metrology.digi-waveform.spin2
+    Description:    Digital waveform (high/low) plot
+    Author:         Jesse Burt
+    Started:        Aug 1, 2026
+    Updated:        Aug 15, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
+}
+{Spin2_v45}
+
+#include "gui.common.spin2"                     ' define display driver API req's, etc
+
+con
+
+    ' sample record
+    struct sample_s(...
+        long state, ...
+        long duration)
+
+    ' plot configuration
+    struct plot_cfg_s(...
+        widget_s widget, ...
+        long plot_color, ...
+        long x_zoom, ...
+        byte invert_y)
+
+
+pub draw(^dispdrv_i disp, ^plot_cfg_s plot, ^sample_s sample, slen) | re, be, x, y, py, s, dur_s, ls
+' Draw a digital waveform plot (windowless)
+'   disp:   pointer to display driver object
+'   plot:   pointer to threshold plot config
+'   sample: pointer to sample array
+'   slen:   length of sample array
+    x := plot.widget.x
+    ls := sample[s].state
+    re := (plot.widget.x + plot.widget.w)-1                 ' pre-calc right edge
+    be := (plot.widget.y + plot.widget.h)-1                 ' pre-calc bottom edge
+
+    s := 0
+
+    ' clear plot area
+    disp.box(plot.widget.x, plot.widget.y, re, be, plot.widget.bgcolor, true)
+
+    repeat while (x < re)                                   ' plot until the right edge is reached
+        py := plot.widget.y + ( (sample[s].state ^ plot.invert_y) * (plot.widget.h-1))
+        dur_s := muldiv64(sample[s].duration, plot.x_zoom, 1_000)    ' scale by zoom factor
+        if ( sample[s].state <> ls )                        ' draw transition
+            disp.vline(x, plot.widget.y, plot.widget.h, plot.plot_color)
+
+        ' draw high or low level
+        disp.hline(py, x, dur_s <# (re-x), plot.plot_color)
+        x := x + dur_s <# re
+        ls := sample[s].state                               ' remember state for next comparison
+        s++                                                 ' next sample
+        if ( s >= slen )
+            return
+
+
+pub draw_to_win(^win_cfg_s win, ^plot_cfg_s plot, ^sample_s sample, slen) | le, te, re, be, cx, y, py, s, dur_s, ls, ^dispdrv_i disp
+' Draw a digital waveform plot to a window
+'   win:    pointer to window to draw to
+'   cfg:    pointer to threshold plot config
+'   sample: pointer to sample array
+'   slen:   sample array length
+'   NOTE: The window being drawn to MUST have a display driver defined first
+'   NOTE: The position drawn will be relative to the window the plot is drawn to.
+
+    [disp] := win.p_disp                                    ' inherit display driver from window
+
+    ' get base coordinates from the window we're drawing to
+    te := win.widget.y + plot.widget.y                      ' pre-calc top edge
+    le := win.widget.x + plot.widget.x + 1                  ' pre-calc left edge
+    re := win.widget.x + (plot.widget.x + plot.widget.w)-1  ' pre-calc right edge
+    be := win.widget.y + (plot.widget.y + plot.widget.h)-1  ' pre-calc bottom edge
+    cx := le
+
+    s := 0
+    ls := sample[s].state
+
+    disp.box(le, te, re, be, plot.widget.bgcolor, true)     ' clear plot area
+
+    repeat while (cx < re)                                  ' plot until the right edge is reached
+        py := te + ( (sample[s].state ^ plot.invert_y) * (plot.widget.h-1))
+        dur_s := muldiv64(sample[s].duration, plot.x_zoom, 1_000) ' scale by zoom factor
+        if ( sample[s].state <> ls )                        ' draw transition
+            disp.vline(cx, te, plot.widget.h, plot.plot_color)
+
+        ' draw high or low level
+        disp.hline(py, cx, dur_s <# (re-cx), plot.plot_color)
+        cx := cx + dur_s <# re
+        ls := sample[s].state                               ' remember state for next transition
+        s++                                                 ' next sample
+        if ( s >= slen )
+            return
+
+dat
+{
+Copyright (c) 2026 Jesse Burt
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+}
+
