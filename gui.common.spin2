@@ -1,0 +1,91 @@
+{
+----------------------------------------------------------------------------------------------------
+    Filename:       gui.common.spin2
+    Description:    Graphical User Interface elements - common code
+    Author:         Jesse Burt
+    Started:        Mar 24, 2025
+    Updated:        Aug 15, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
+}
+{Spin2_v45}
+
+con
+
+    ' display driver API requirements
+    %interface dispdrv_i(
+        pub box(x1, y1, x2, y2, c, f)
+        pub fgcolor(c)
+        pub hline(y, xs, len, c)
+        pub line(x1, y1, x2, y2, c)
+        pub newline()
+        pub plot(x, y, c)
+        pub pos_xy(x, y)
+        pub puts(p_str)
+        pub vline(x, ys, len, c)
+    )
+
+    ' terminal driver API requirements
+    %interface termdrv_i(
+        pub clear_line()
+        pub newline()
+        pub pos_x(x)
+        pub pos_xy(x, y)
+        pub puts(p_str)
+    )
+
+
+    ' configuration structure used by all widgets
+    struct widget_s( ...
+        word x, y, w, h, ...
+        long bgcolor, fgcolor)
+
+
+
+' Text windows
+#ifndef TXT_LINE_MAX_LEN
+# define TXT_LINE_MAX_LEN   80
+#endif
+
+#ifndef TEXTWIN_MAX_LINES
+# define TEXTWIN_MAX_LINES  5
+#endif
+
+    ' line-buffer
+    struct txt_line_s( byte text[TXT_LINE_MAX_LEN] )
+
+    ' line-buffer window
+    struct textwin_s(...
+        widget_s widget, ...
+        byte current_line, ...
+        byte lines, ...
+        txt_line_s line[TEXTWIN_MAX_LINES])
+' --
+
+' generic window
+    struct win_cfg_s(...
+        widget_s widget, ...
+        long p_title_str, ...
+        long p_disp)
+
+
+dat
+{
+Copyright (c) 2026 Jesse Burt
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+}
+

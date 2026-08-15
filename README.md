@@ -9,7 +9,7 @@ This is a P8X32A/Propeller, P2X8C4M64P/Propeller 2 library of GUI-related elemen
 ## Salient Features
 
 * Object-oriented - attached at the application level to any compatible display driver
-* (P1): Scrollable text window (for ANSI serial terminals)
+* (P1, P2): Scrollable text window (for ANSI serial terminals)
 * (P1): Touchscreen button management (for EVE displays)
 * (P1, P2): Battery gauge widget
 * (P1): GUI frame widget (for EVE displays)
@@ -33,16 +33,15 @@ P2/SPIN2:
 
 | Processor | Language | Compiler               | Backend      | Status                |
 |-----------|----------|------------------------|--------------|-----------------------|
-| P1        | SPIN1    | FlexSpin (6.1.1)       | Bytecode     | OK                    |
-| P1        | SPIN1    | FlexSpin (6.1.1)       | Native/PASM  | OK                    |
-| P2        | SPIN2    | FlexSpin (6.1.1)       | NuCode       | Not yet implemented   |
-| P2        | SPIN2    | FlexSpin (6.1.1)       | Native/PASM2 | OK                    |
+| P1        | SPIN1    | FlexSpin (7.7.0)       | Bytecode     | OK                    |
+| P1        | SPIN1    | FlexSpin (7.7.0)       | Native/PASM  | OK                    |
+| P2        | SPIN2    | FlexSpin (7.7.0)       | NuCode       | OK                    |
+| P2        | SPIN2    | FlexSpin (7.7.0)       | Native/PASM2 | OK                    |
 
 (other versions or toolchains not listed are __not supported__, and _may or may not_ work)
 
 
 ## Limitations
 
-* Very early in development - may malfunction, or outright fail to build
-* Some objects are currently limited to certain display drivers
+* Some objects are currently limited to certain display or terminal drivers
 

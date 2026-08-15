@@ -1,0 +1,190 @@
+{
+----------------------------------------------------------------------------------------------------
+    Filename:       gui.win-scrolltext.spin2
+    Description:    GUI element: scrollable text window (no window decorations)
+        Provides a scrollable (forward only; no scrollback) text buffer that can be written to
+        using standard terminal I/O routines (see p2-spin-standard-library terminal.common.spin2h)
+    Author:         Jesse Burt
+    Started:        Jun 30, 2023
+    Updated:        Aug 15, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
+
+    Requirements:
+        Terminal driver with the interface:
+            pub clear_line()
+            pub newline()
+            pub pos_x(x)
+            pub pos_xy(x, y)
+            pub puts(p_str)
+
+    Usage:
+        1) Declare an instance of this object.
+            #define preprocessor symbols TXT_LINE_MAX_LEN and TEXTWIN_MAX_LINES
+            These define the maximum size the text buffer and number of lines can be,
+            and thus have a direct impact on memory usage.
+        2) Point it to the window buffer ( set_active_window() )
+        3) Write text to the buffer using standard terminal I/O from this object
+            (if enough text is written to the buffer that it would write past the end,
+            it will be "scrolled" in memory a line's worth of text - this can be leveraged
+            to display a text logging window)
+            e.g., win.putchar(), win.puts(), win.printf(), etc
+        4) Draw the text buffer ( see draw_text_buffer(@window, @term_driver_object) )
+
+    Build with FlexSpin.
+
+
+    Example 'Application.spin2':
+---
+
+con
+
+#define TXT_LINE_MAX_LEN    100
+#define TEXTWIN_MAX_LINES   6
+#pragma exportdef(TXT_LINE_MAX_LEN)
+#pragma exportdef(TEXTWIN_MAX_LINES)
+
+
+obj
+
+    term:   "com.serial.terminal.ansi"
+    win:    "gui.win-scrolltext"                        ' step 1
+
+
+#include "gui.common.spin2"                             ' provide struct definitions
+
+var
+
+    textwin_s window                                    ' memory for the text window
+
+
+pub main() | i
+
+    term.start()
+    term.clear()
+
+    win.set_active_window(@window)                      ' text output goes to 
+
+    window.widget.x := 5                                ' set position on terminal display
+    window.widget.y := 5
+
+    i := 0
+    repeat
+        win.printf(@"This is a test message %d\n", i++) ' step 3
+        win.draw_text_buffer(@window, @term)            ' step 4
+
+---
+}
+{Spin2_v45}
+
+#include "gui.common.spin2"
+
+var
+
+    ^textwin_s  active_window                   ' tell putchar() where to print
+
+
+pub clear(^textwin_s win) | sz, l
+' Clear the window's buffer and reset the input to the first line
+    sz := TXT_LINE_MAX_LEN
+    ifnot ( sz & %11 )
+        sz /= 4
+        repeat l from 0 to TEXTWIN_MAX_LINES-1
+            longfill(@window.line[l].text, 0, sz)
+    elseifnot ( sz & %01 )
+        sz /= 2
+        repeat l from 0 to TEXTWIN_MAX_LINES-1
+            wordfill(@window.line[l].text, 0, sz)
+    else
+        repeat l from 0 to TEXTWIN_MAX_LINES-1
+            bytefill(@win.line[l].text, 0, sz)
+
+    win.current_line := 0
+
+
+pub draw_text_buffer(^textwin_s win, ^termdrv_i disp) | l, lsz
+' Draw the text buffer 
+    disp.pos_xy(win.widget.x, win.widget.y)
+    repeat l from 0 to win.lines-1
+        disp.pos_xy(win.widget.x, win.widget.y+l)
+        disp.puts(@win.line[l].text)
+
+
+var byte _linebuff[TXT_LINE_MAX_LEN], _linebuff_ptr
+pub putchar(ch): r
+' Put a character into the linebuffer
+'   ch: printable ASCII value (32..126)
+'   NOTE: When a linefeed (10) character is entered or the linebuffer reaches its maximum size,
+'       the buffer will be copied to the window
+'   NOTE: The active window to write to must be set first with set_active_window()
+    ifnot ( [active_window] )                   ' guard against writes to undefined window
+        return -1
+
+    if ( active_window.current_line >= TEXTWIN_MAX_LINES )
+        active_window.current_line--
+        scroll_up(@active_window)
+    if ( lookdown(ch: 32..126) )
+        ' only allow printable characters
+        _linebuff[_linebuff_ptr++] := ch
+    if ( (_linebuff_ptr >= TXT_LINE_MAX_LEN) or (ch == LF) )
+    ' line input max reached or linefeed entered
+        ' copy the line buffer to the "live" window buffer
+        strcopy(@active_window.line[active_window.current_line].text, ...
+                @_linebuff, ...
+                TXT_LINE_MAX_LEN)
+        bytefill(@_linebuff, 0, TXT_LINE_MAX_LEN)
+        bytefill(@_linebuff, 32, TXT_LINE_MAX_LEN-1)
+
+        _linebuff_ptr := 0
+        active_window.current_line++
+        active_window.lines++
+        if ( active_window.lines >= TEXTWIN_MAX_LINES )
+            active_window.lines--
+
+
+pub scroll_up(^textwin_s win) | sz
+' Scroll the text window up
+'   win:    pointer to window storage (textwin_s)
+    sz := TXT_LINE_MAX_LEN * (TEXTWIN_MAX_LINES-1)
+
+    ' use the fastest block move possible
+    ifnot ( sz & %11 )
+        longmove(@win.line[0].text, @win.line[1].text, sz/4)
+        longfill(@win.line[TEXTWIN_MAX_LINES-1].text, 0, TXT_LINE_MAX_LEN/4)
+    elseifnot ( sz & %01 )
+        wordmove(@win.line[0].text, @win.line[1].text, sz/2)
+        wordfill(@win.line[TEXTWIN_MAX_LINES-1], 0, TXT_LINE_MAX_LEN/2)
+    else
+        bytemove(@win.line[0].text, @win.line[1].text, sz)
+        bytefill(@win.line[TEXTWIN_MAX_LINES-1].text, 0, TXT_LINE_MAX_LEN)
+
+
+pub set_active_window(^textwin_s win)
+' Set the window new data will be written to
+'   win:    pointer to window storage (textwin_s)
+    [active_window] := [win]
+
+
+#include "terminal.common.spin2h"                ' provide the standard terminal routines
+
+
+dat
+{
+Copyright 2026 Jesse Burt
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+}
+
