@@ -15,82 +15,135 @@ con
         long text_sz, ...
         long options, ...
         long p_text, ...
+        word font_w, ...
+        word font_h, ...
         byte state)
+
+
+pub draw(^dispdrv_i disp, ^button_s btn)
+' Draw a button
+'   disp:   display driver interface (pointer to driver object, e.g., @lcd)
+'   btn:    button (pointer to button_s struct)
+    disp.box(   btn.widget.x, btn.widget.y, ...
+                btn.widget.x+btn.widget.w-1, btn.widget.y+btn.widget.h-1, ...
+                btn.widget.fgcolor, ...
+                false)
+
+    if ( text_len(@btn) )
+        disp.pos_xy(    (btn.widget.x+(btn.widget.w/2))-((text_len(@btn) * btn.font_w)/2), ...
+                        btn.widget.y+(btn.widget.h/2)-(btn.font_h/2) )
+        disp.fgcolor(btn.widget.fgcolor)
+        disp.puts(btn.p_text)
 
 
 pub get_ex(^button_s btn): c
 ' Get the ending X coordinate of the button, based on its starting coord and width
+'   btn:    button (pointer to button_s struct)
     return (btn.widget.x + btn.widget.w)-1
 
 
 pub get_ey(^button_s btn): c
 ' Get the ending Y coordinate of the button, based on its starting coord and height
+'   btn:    button (pointer to button_s struct)
     return (btn.widget.y + btn.widget.h)-1
 
 
 pub get_sx(^button_s btn): c
 ' Get the ending X coordinate of the button, based on its starting coord and width
+'   btn:    button (pointer to button_s struct)
     return btn.widget.x
 
 
 pub get_sy(^button_s btn): c
 ' Get the ending X coordinate of the button, based on its starting coord and width
+'   btn:    button (pointer to button_s struct)
     return btn.widget.y
 
 
 pub min_height(^button_s btn): w
 ' Get the minimum height of a button, considering its font size
+'   btn:    button (pointer to button_s struct)
     return btn.text_sz
 
 
 pub min_width(^button_s btn): w
 ' Get the minimum width of a button, considering its font size and length of text
+'   btn:    button (pointer to button_s struct)
     return text_len(@btn)
 
 
 pub set_bgcolor(^button_s btn, bgc)
-
+' Set a button's background (button interior area) color
+'   btn:    button (pointer to button_s struct)
+'   bgc:    color
     btn.widget.bgcolor := bgc
 
 
 pub set_fgcolor(^button_s btn, fgc)
-
+' Set a button's foreground (outline, text) color
+'   btn:    button (pointer to button_s struct)
+'   fgc:    color
     btn.widget.fgcolor := fgc
+
+
+pub set_font_sz(^button_s btn, w, h)
+' Set button text font size
+'   btn:    button (pointer to button_s struct)
+'   w, h:   font size (pixels)
+    btn.font_w := w
+    btn.font_h := h
 
 
 pub set_pos(^button_s btn, x, y)
 ' Set button position
-'   btn_nr: button number
-'   x, y: coordinates of upper-left button corner
+'   btn:    button (pointer to button_s struct)
+'   x, y:   upper-left coordinates of button
     btn.widget.x := x
     btn.widget.y := y
 
 
 pub set_sx(^button_s btn, x)
 ' Set starting X coordinate of button
+'   btn:    button (pointer to button_s struct)
+'   x:      position (pixels)
     btn.widget.x := x
 
 
 pub set_sy(^button_s btn, y)
 ' Set starting Y coordinate of button
+'   btn:    button (pointer to button_s struct)
+'   y:      position (pixels)
     btn.widget.y := y
 
 
 pub set_height(^button_s btn, h)
-
+' Set button height
+'   btn:    button (pointer to button_s struct)
+'   h:      height (pixels)
     btn.widget.h := h
 
 
-pub set_width(^button_s btn, w)
+pub set_text(^button_s btn, p_text)
+' Set button text
+'   btn:    button (pointer to button_s struct)
+'   p_text: text string (pointer)
+    btn.p_text := p_text
+    ifnot ( btn.widget.w )
+    ' use button text to set the button's width, if it hasn't yet been set
+        btn.widget.w := (strsize(p_text)+1) * btn.font_w
 
+
+pub set_width(^button_s btn, w)
+' Set button width
+'   btn:    button (pointer to button_s struct)
+'   w:      width (pixels)
     btn.widget.w := w
 
 
 pub text_len(^button_s btn): len
 ' Get the length of the text string pointed to by the button definition
-'   btn_nr: button number
-    return strsize(btn.p_text)
-
+'   btn:    button (pointer to button_s struct)
+    len := strsize(btn.p_text)
 
 dat
 {
