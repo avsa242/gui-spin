@@ -4,7 +4,7 @@
     Description:    Graphical User Interface elements - common code
     Author:         Jesse Burt
     Started:        Mar 24, 2025
-    Updated:        Aug 15, 2026
+    Updated:        Aug 23, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -38,6 +38,7 @@ con
     ' configuration structure used by all widgets
     struct widget_s( ...
         word x, y, w, h, ...
+        byte touch_id, ...
         long bgcolor, fgcolor)
 
 
