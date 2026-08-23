@@ -4,7 +4,7 @@
     Description:    Digital waveform (high/low) plot
     Author:         Jesse Burt
     Started:        Aug 1, 2026
-    Updated:        Aug 15, 2026
+    Updated:        Aug 23, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -45,7 +45,7 @@ pub draw(^dispdrv_i disp, ^plot_cfg_s plot, ^sample_s sample, slen) | re, be, x,
 
     repeat while (x < re)                                   ' plot until the right edge is reached
         py := plot.widget.y + ( (sample[s].state ^ plot.invert_y) * (plot.widget.h-1))
-        dur_s := muldiv64(sample[s].duration, plot.x_zoom, 1_000)    ' scale by zoom factor
+        dur_s := muldiv64(sample[s].duration, plot.x_zoom, 1_000000)    ' scale by zoom factor
         if ( sample[s].state <> ls )                        ' draw transition
             disp.vline(x, plot.widget.y, plot.widget.h, plot.plot_color)
 
@@ -83,7 +83,7 @@ pub draw_to_win(^win_cfg_s win, ^plot_cfg_s plot, ^sample_s sample, slen) | le, 
 
     repeat while (cx < re)                                  ' plot until the right edge is reached
         py := te + ( (sample[s].state ^ plot.invert_y) * (plot.widget.h-1))
-        dur_s := muldiv64(sample[s].duration, plot.x_zoom, 1_000) ' scale by zoom factor
+        dur_s := muldiv64(sample[s].duration, plot.x_zoom, 1_000000) ' scale by zoom factor
         if ( sample[s].state <> ls )                        ' draw transition
             disp.vline(cx, te, plot.widget.h, plot.plot_color)
 
