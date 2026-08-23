@@ -1,3 +1,13 @@
+{
+----------------------------------------------------------------------------------------------------
+    Filename:       gui.button.spin2
+    Description:    Button GUI element
+    Author:         Jesse Burt
+    Started:        Aug 22, 2026
+    Updated:        Aug 23, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
+}
 {Spin2_v45}
 
 #include "gui.common.spin2"
@@ -32,6 +42,28 @@ pub draw(^dispdrv_i disp, ^button_s btn)
     if ( text_len(@btn) )
         disp.pos_xy(    (btn.widget.x+(btn.widget.w/2))-((text_len(@btn) * btn.font_w)/2), ...
                         btn.widget.y+(btn.widget.h/2)-(btn.font_h/2) )
+        disp.fgcolor(btn.widget.fgcolor)
+        disp.puts(btn.p_text)
+
+
+pub draw_to_win(^win_cfg_s win, ^button_s btn) | ^dispdrv_i disp, sx, sy, ex, ey
+' Draw a button to a window
+'   win:    pointer to window to draw to
+'   btn:    button (pointer to button_s struct)
+'   NOTE: The window being drawn to MUST have a display driver defined first
+'   NOTE: The position drawn will be relative to the window the plot is drawn to.
+    [disp] := win.p_disp                        ' inherit display driver from window
+
+    ' redefine position relative to the window (for this call only)
+    sx := win.widget.x + btn.widget.x
+    sy := win.widget.y + btn.widget.y
+    ex := sx + btn.widget.w-1
+    ey := sy + btn.widget.h-1
+
+    disp.box(sx, sy, ex, ey, btn.widget.fgcolor, false)
+    if ( text_len(@btn) )
+        disp.pos_xy(    sx+(btn.widget.w/2)-((text_len(@btn) * btn.font_w)/2), ...
+                        sy+(btn.widget.h/2)-(btn.font_h/2) )
         disp.fgcolor(btn.widget.fgcolor)
         disp.puts(btn.p_text)
 
@@ -144,6 +176,7 @@ pub text_len(^button_s btn): len
 ' Get the length of the text string pointed to by the button definition
 '   btn:    button (pointer to button_s struct)
     len := strsize(btn.p_text)
+
 
 dat
 {
