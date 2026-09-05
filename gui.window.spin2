@@ -40,6 +40,17 @@ pub create(^dispdrv_i dobj, x, y, w, h, bgc, fgc): i | wp
     return -1
 
 
+pub destroy(^window_s win): i | o
+
+    if ( (_nr_win > 0) and win.p_disp )
+        win~
+        i := _nr_win
+        _nr_win--
+        return
+
+    return false
+
+
 pub draw(^window_s win) | ^dispdrv_i disp, o
 ' Draw a window
 '   disp:   pointer to display driver

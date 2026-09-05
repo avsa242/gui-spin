@@ -38,7 +38,7 @@ pub create(^window_s pwin, x, y, w, h, fw, fh, p_txt): i | wp
 '   p_txt:  button text (pointer to string)
 '   Returns:
 '           button handle on success (pointer)
-'           0 on failure (exceeded parent window's maximum number of obects,
+'           0 on failure (exceeded parent window's maximum number of objects,
 '                           or this object's maximum number of buttons)
     if ( (pwin.nr_obj < MAX_WIN_OBJS ) and (_nr_buttons < MAX_BUTTONS) )
         i := @button[_nr_buttons]
@@ -59,6 +59,20 @@ pub create(^window_s pwin, x, y, w, h, fw, fh, p_txt): i | wp
         return
 
     return 0
+
+
+pub destroy(^button_s btn): s
+' Destroy a button object
+'   plot:       button (pointer to button_s struct)
+'   Returns:    number of buttons before destruction
+    if ( (_nr_buttons > 0) and (btn.widget.type == OBJ_BUTTON) )
+    ' do some basic safeguards before just clearing memory
+        btn~
+        s := _nr_buttons
+        _nr_buttons--
+        return
+
+    return false
 
 
 pub draw(^button_s btn) | ^window_s win, ^dispdrv_i disp, sx, sy, ex, ey
@@ -166,6 +180,7 @@ pub text_len(^button_s btn): len
 ' Get the length of the text string pointed to by the button definition
 '   btn:    button (pointer to button_s struct)
     len := strsize(btn.p_text)
+
 
 
 dat

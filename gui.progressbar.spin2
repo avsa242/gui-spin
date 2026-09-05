@@ -63,6 +63,20 @@ pub create(^window_s pwin, x, y, w=PROGBAR_DEF_WID, h=PROGBAR_DEF_HT): i | wp
     return 0
 
 
+pub destroy(^progressbar_s pbar): s
+' Destroy a progress bar object
+'   plot:       progress bar (pointer to progressbar_s struct)
+'   Returns:    number of progress bars before destruction
+    if ( (_nr_progbars > 0) and (pbar.widget.type == OBJ_PROGRESS_BAR) )
+    ' do some basic safeguards before just clearing memory
+        pbar~
+        s := _nr_progbars
+        _nr_progbars--
+        return
+
+    return false
+
+
 pub draw(^progressbar_s pbar) | ^window_s win, ^dispdrv_i disp, sx, sy, ex, ey, p, l, s, c
 ' Draw a progress bar
 '   pbar:   progress bar data (pointer to progressbar_s struct)

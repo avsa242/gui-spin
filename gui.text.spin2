@@ -41,6 +41,20 @@ pub create(^window_s pwin, x, y, w, h, p_fnt, p_str): i | wp
     return 0
 
 
+pub destroy(^text_label_s txt): s
+' Destroy a text label object
+'   plot:       text label (pointer to text_label_s struct)
+'   Returns:    number of text labels before destruction
+    if ( (_nr_labels > 0) and (txt.widget.type == OBJ_TEXT_LABEL) )
+    ' do some basic safeguards before just clearing memory
+        txt~
+        s := _nr_labels
+        _nr_labels--
+        return
+
+    return false
+
+
 pub draw(^text_label_s txt) | ^window_s win, ^dispdrv_i disp, sx, sy, ex, ey
 ' Draw a text label to a window
 '   txt:    text label object (pointer to text_label_s struct)

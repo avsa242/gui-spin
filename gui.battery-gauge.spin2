@@ -61,6 +61,20 @@ pub create(^window_s pwin, x, y): i | wp
     return 0
 
 
+pub destroy(^batt_gauge_s bg): s
+' Destroy a battery gauge object
+'   plot:       battery gauge (pointer to batt_gauge_s struct)
+'   Returns:    number of gauges before destruction
+    if ( (_nr_gauges > 0) and (bg.widget.type == OBJ_BATT_GAUGE) )
+    ' do some basic safeguards before just clearing memory
+        bg~
+        s := _nr_gauges
+        _nr_gauges--
+        return
+
+    return false
+
+
 pub draw(^batt_gauge_s gauge) | ^window_s win, ^dispdrv_i disp, sx, sy, ex, ey, p, l, h, s, c
 ' Draw a battery gauge
 '   gauge:  battery gauge data (pointer to batt_gauge_s struct)

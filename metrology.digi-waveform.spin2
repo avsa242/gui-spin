@@ -23,6 +23,11 @@ con
         long duration)
 
 
+obj
+
+    slicer: "dsp.byte-slicer"
+
+
 var
 
     digi_plot_s  digi_plot[MAX_DIGI_PLOTS]
@@ -59,7 +64,21 @@ pub create(^window_s pwin, x, y, w, h): i | wp
     return 0
 
 
-pub draw(^digi_plot_s plot, ^sample_s sample, slen) | ^window_s win, le, te, re, be, cx, y, py, s, dur_s, ls, ^dispdrv_i disp
+pub destroy(^digi_plot_s plot): s
+' Destroy a digi-plot object
+'   plot:       digi-plot (pointer to digi_plot_s struct)
+'   Returns:    number of plots before destruction
+    if ( (_nr_digi_plots > 0) and (plot.widget.type == OBJ_DIGI_PLOT) )
+    ' do some basic safeguards before just clearing memory
+        plot~
+        s := _nr_digi_plots
+        _nr_digi_plots--
+        return
+
+    return false
+
+
+pub draw(^digi_plot_s plot) | ^window_s win, le, te, re, be, cx, y, py, s, dur_s, ls, ^dispdrv_i disp, ^slicer.capture_s cap
 ' Draw a digital waveform plot to a window
 '   win:    pointer to window to draw to
 '   cfg:    pointer to threshold plot config
@@ -69,7 +88,7 @@ pub draw(^digi_plot_s plot, ^sample_s sample, slen) | ^window_s win, le, te, re,
 '   NOTE: The position drawn will be relative to the window the plot is drawn to.
     [win] := plot.widget.parent                         ' get handle on parent window
     [disp] := win.p_disp                                    ' inherit display driver from window
-
+    [cap] := plot.p_plot
     ' get base coordinates from the window we're drawing to
     te := win.widget.y + plot.widget.y                      ' pre-calc top edge
     le := win.widget.x + plot.widget.x                      ' pre-calc left edge
@@ -78,22 +97,22 @@ pub draw(^digi_plot_s plot, ^sample_s sample, slen) | ^window_s win, le, te, re,
     cx := le
 
     s := 0
-    ls := sample[s].state
+    ls := cap.record[s].state
 
     disp.box(le, te, re, be, plot.widget.bgcolor, true)     ' clear plot area
 
     repeat while (cx < re)                                  ' plot until the right edge is reached
-        py := te + ( (sample[s].state ^ plot.invert_y) * (plot.widget.h-1))
-        dur_s := muldiv64(sample[s].duration, plot.x_zoom, 1_000000) ' scale by zoom factor
-        if ( sample[s].state <> ls )                        ' draw transition
+        py := te + ( (cap.record[s].state ^ plot.invert_y) * (plot.widget.h-1))
+        dur_s := muldiv64(cap.record[s].time, plot.x_zoom, 1_000000) ' scale by zoom factor
+        if ( cap.record[s].state <> ls )                        ' draw transition
             disp.vline(cx, te, plot.widget.h, plot.plot_color)
 
         ' draw high or low level
         disp.hline(py, cx, dur_s <# (re-cx), plot.plot_color)
         cx := cx + dur_s <# re
-        ls := sample[s].state                               ' remember state for next transition
+        ls := cap.record[s].state                               ' remember state for next transition
         s++                                                 ' next sample
-        if ( s >= slen )
+        if ( s >= cap.len )
             return
 
 
@@ -139,6 +158,13 @@ pub set_plot_color(^digi_plot_s plot, c)
 '   plot:   digi-plot (pointer to digi_plot_s struct)
 '   c:      color
     plot.plot_color := c
+
+
+pub set_plot_data(^digi_plot_s plot, p_data)
+' Set plot data used by a waveform plotter
+'   plot:   digi-plot (pointer to digi_plot_s struct)
+'   p_data: plot/capture data (pointer; typically a capture_s struct)
+    plot.p_plot := p_data
 
 
 pub set_x_zoom(^digi_plot_s plot, z)
