@@ -14,20 +14,90 @@
 
 con
 
+    ' limits
+    MAX_DIGI_PLOTS  = 4
+
     ' sample record
     struct sample_s(...
         long state, ...
         long duration)
 
-    ' plot configuration
-    struct plot_cfg_s(...
-        widget_s widget, ...
-        long plot_color, ...
-        long x_zoom, ...
-        byte invert_y)
+
+var
+
+    digi_plot_s  digi_plot[MAX_DIGI_PLOTS]
+    byte        _nr_digi_plots
 
 
-pub draw(^dispdrv_i disp, ^plot_cfg_s plot, ^sample_s sample, slen) | re, be, x, y, py, s, dur_s, ls
+pub create(^window_s pwin, x, y, w, h): i | wp
+' Create a digital waveform plot object
+'   pwin:   parent window (pointer to window_s struct)
+'   x, y:   plot upper-left position (pixels)
+'   w, h:   plot dimensions (pixels)
+'   Returns:
+'           plot handle on success (pointer)
+'           0 on failure (exceeded parent window's maximum number of obects,
+'                           or this object's maximum number of plots)
+    if ( (pwin.nr_obj < MAX_WIN_OBJS ) and (_nr_digi_plots < MAX_DIGI_PLOTS) )
+        i := @digi_plot[_nr_digi_plots]
+        wp := @digi_plot[_nr_digi_plots].widget
+
+        set_type(wp,        OBJ_DIGI_PLOT)
+        set_parent_obj(wp,  @pwin)
+        set_posxy(wp,       x, y)
+        set_dims(wp,        w, h)
+        set_bgcolor(wp,     pwin.widget.bgcolor)' inherit widget colors from parent
+        set_fgcolor(wp,     pwin.widget.fgcolor)
+        set_x_zoom(i,       0_001000)           ' default to 0.001x zoom
+        set_plot_color(i,   pwin.widget.fgcolor)' inherit plot color from parent's foreground color
+
+        pwin.object[pwin.nr_obj] := i
+        pwin.nr_obj++
+        _nr_digi_plots++
+        return
+
+    return 0
+
+
+pub draw(^digi_plot_s plot, ^sample_s sample, slen) | ^window_s win, le, te, re, be, cx, y, py, s, dur_s, ls, ^dispdrv_i disp
+' Draw a digital waveform plot to a window
+'   win:    pointer to window to draw to
+'   cfg:    pointer to threshold plot config
+'   sample: pointer to sample array
+'   slen:   sample array length
+'   NOTE: The window being drawn to MUST have a display driver defined first
+'   NOTE: The position drawn will be relative to the window the plot is drawn to.
+    [win] := plot.widget.parent                         ' get handle on parent window
+    [disp] := win.p_disp                                    ' inherit display driver from window
+
+    ' get base coordinates from the window we're drawing to
+    te := win.widget.y + plot.widget.y                      ' pre-calc top edge
+    le := win.widget.x + plot.widget.x                      ' pre-calc left edge
+    re := win.widget.x + (plot.widget.x + plot.widget.w)-1  ' pre-calc right edge
+    be := win.widget.y + (plot.widget.y + plot.widget.h)-1  ' pre-calc bottom edge
+    cx := le
+
+    s := 0
+    ls := sample[s].state
+
+    disp.box(le, te, re, be, plot.widget.bgcolor, true)     ' clear plot area
+
+    repeat while (cx < re)                                  ' plot until the right edge is reached
+        py := te + ( (sample[s].state ^ plot.invert_y) * (plot.widget.h-1))
+        dur_s := muldiv64(sample[s].duration, plot.x_zoom, 1_000000) ' scale by zoom factor
+        if ( sample[s].state <> ls )                        ' draw transition
+            disp.vline(cx, te, plot.widget.h, plot.plot_color)
+
+        ' draw high or low level
+        disp.hline(py, cx, dur_s <# (re-cx), plot.plot_color)
+        cx := cx + dur_s <# re
+        ls := sample[s].state                               ' remember state for next transition
+        s++                                                 ' next sample
+        if ( s >= slen )
+            return
+
+
+pub draw_to_disp(^dispdrv_i disp, ^digi_plot_s plot, ^sample_s sample, slen) | re, be, x, y, py, s, dur_s, ls
 ' Draw a digital waveform plot (windowless)
 '   disp:   pointer to display driver object
 '   plot:   pointer to threshold plot config
@@ -57,43 +127,26 @@ pub draw(^dispdrv_i disp, ^plot_cfg_s plot, ^sample_s sample, slen) | re, be, x,
         if ( s >= slen )
             return
 
+pub ptr_widget(^digi_plot_s plot): ^widget_s ow
+' Get pointer to a digi-plot's widget configuration
+'   plot:       digi-plot (pointer to digi_plot_s struct)
+'   Returns:    pointer to widget_s struct
+    return @plot.widget
 
-pub draw_to_win(^win_cfg_s win, ^plot_cfg_s plot, ^sample_s sample, slen) | le, te, re, be, cx, y, py, s, dur_s, ls, ^dispdrv_i disp
-' Draw a digital waveform plot to a window
-'   win:    pointer to window to draw to
-'   cfg:    pointer to threshold plot config
-'   sample: pointer to sample array
-'   slen:   sample array length
-'   NOTE: The window being drawn to MUST have a display driver defined first
-'   NOTE: The position drawn will be relative to the window the plot is drawn to.
 
-    [disp] := win.p_disp                                    ' inherit display driver from window
+pub set_plot_color(^digi_plot_s plot, c)
+' Set waveform plot color
+'   plot:   digi-plot (pointer to digi_plot_s struct)
+'   c:      color
+    plot.plot_color := c
 
-    ' get base coordinates from the window we're drawing to
-    te := win.widget.y + plot.widget.y                      ' pre-calc top edge
-    le := win.widget.x + plot.widget.x + 1                  ' pre-calc left edge
-    re := win.widget.x + (plot.widget.x + plot.widget.w)-1  ' pre-calc right edge
-    be := win.widget.y + (plot.widget.y + plot.widget.h)-1  ' pre-calc bottom edge
-    cx := le
 
-    s := 0
-    ls := sample[s].state
+pub set_x_zoom(^digi_plot_s plot, z)
+' Set waveform X-axis/timescale zoom
+'   plot:   digi-plot (pointer to digi_plot_s struct)
+'   z:      scale factor (in millionths, i.e., 0_000001 = 0.000001, 1_000000 = 1.000000)
+    plot.x_zoom := z
 
-    disp.box(le, te, re, be, plot.widget.bgcolor, true)     ' clear plot area
-
-    repeat while (cx < re)                                  ' plot until the right edge is reached
-        py := te + ( (sample[s].state ^ plot.invert_y) * (plot.widget.h-1))
-        dur_s := muldiv64(sample[s].duration, plot.x_zoom, 1_000000) ' scale by zoom factor
-        if ( sample[s].state <> ls )                        ' draw transition
-            disp.vline(cx, te, plot.widget.h, plot.plot_color)
-
-        ' draw high or low level
-        disp.hline(py, cx, dur_s <# (re-cx), plot.plot_color)
-        cx := cx + dur_s <# re
-        ls := sample[s].state                               ' remember state for next transition
-        s++                                                 ' next sample
-        if ( s >= slen )
-            return
 
 dat
 {

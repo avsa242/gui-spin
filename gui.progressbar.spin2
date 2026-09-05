@@ -1,0 +1,129 @@
+{
+----------------------------------------------------------------------------------------------------
+    Filename:       gui.progressbar.spin2
+    Description:    Progress bar GUI widget
+    Author:         Jesse Burt
+    Started:        
+    Updated:        Sep 5, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
+
+    Requirements:
+        a display driver that provides the following interfaces:
+            pub box(sx, sy, ex, ey, color, fill_flag)
+            pub line(sx, sy, ex, ey, color)
+        a window to draw the progress bar to (window_s type from gui.window.spin2)
+}
+
+#include "gui.common.spin2"
+
+
+con
+
+    ' limits
+    MAX_PROGRESS_BARS   = 1
+
+    ' progress bar default dimensions
+    PROGBAR_DEF_WID     = 4
+    PROGBAR_DEF_HT      = 10
+
+
+var
+
+    progressbar_s   prog_bar[MAX_PROGRESS_BARS]
+    byte            _nr_progbars
+
+
+pub create(^window_s pwin, x, y, w=PROGBAR_DEF_WID, h=PROGBAR_DEF_HT): i | wp
+' Create a progress bar object
+'   pwin:   parent window (pointer to window_s struct)
+'   x, y:   button upper-left position (pixels)
+'   w, h:   progress bar dimensions (pixels; optional - defaults will be used if unspecified)
+'   Returns:
+'           progress bar handle on success (pointer)
+'           0 on failure (exceeded parent window's maximum number of obects,
+'                           or this object's maximum number of buttons)                                 
+    if ( (pwin.nr_obj < MAX_WIN_OBJS) and (_nr_progbars < MAX_PROGRESS_BARS) )
+        i := @prog_bar[_nr_progbars]
+        wp := @prog_bar[_nr_progbars].widget    ' widget struct pointer
+
+        ' set up widget basic configuration
+        set_type(wp,        OBJ_PROGRESS_BAR)
+        set_parent_obj(wp,  @pwin)
+        set_posxy(wp,       x, y)
+        set_dims(wp,        w, h)
+        set_bgcolor(wp,     pwin.widget.bgcolor)' inherit widget colors from parent
+        set_fgcolor(wp,     pwin.widget.fgcolor)
+
+        pwin.object[pwin.nr_obj] := i
+        pwin.nr_obj++
+        _nr_progbars++
+        return
+
+    return 0
+
+
+pub draw(^progressbar_s pbar) | ^window_s win, ^dispdrv_i disp, sx, sy, ex, ey, p, l, s, c
+' Draw a progress bar
+'   pbar:   progress bar data (pointer to progressbar_s struct)
+    [win] := pbar.widget.parent                 ' get handle on parent window
+    [disp] := win.p_disp                        ' get the display driver interface from the parent
+
+    sx := win.widget.x+pbar.widget.x
+    sy := win.widget.y+pbar.widget.y
+    ex := sx + pbar.widget.w-1
+    ey := sy + pbar.widget.h-1
+    p := (0 #> pbar.state <# 100)
+    l := (ex-sx)-2                              ' fill length (account for bar outline too)
+
+    ' draw the outline
+    disp.box(sx, sy, ex, ey, pbar.outline_color, false)
+
+    ' draw the progress bar itself
+    if ( p )                                    ' only draw if percent > 0
+        s := (p * l) / 100                      ' scaled bar/filled length
+        disp.box(sx+1, sy+1, sx+1+s, ey-1, pbar.widget.fgcolor, true)
+
+
+pub ptr_widget(^progressbar_s pbar): ^widget_s ow
+' Get pointer to a progress bar's widget configuration
+'   pbar:       progress bar (pointer to progressbar_s struct)
+'   Returns:    pointer to widget_s struct
+    return @pbar.widget
+
+
+pub set_bar_color = set_fgcolor
+' Set battery state of charge bar color
+
+
+pub set_outline_color(^progressbar_s pbar, c)
+' Set progressbar outline color
+    pbar.outline_color := c
+
+
+pub set_state(^progressbar_s pbar, s)
+' Set progress bar percentage
+'   s:  percentage (0..100)
+    pbar.state := s
+
+
+dat
+{
+Copyright 2026 Jesse Burt
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+}
+

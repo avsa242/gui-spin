@@ -4,139 +4,111 @@
     Description:    Battery gauge GUI widget
     Author:         Jesse Burt
     Started:        Jan 15, 2024
-    Updated:        Mar 22, 2025
-    Copyright (c) 2025 - See end of file for terms of use.
+    Updated:        Sep 5, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 
     Requirements:
         a display driver that provides the following interfaces:
-            con MAX_COLOR = xxx (xxx is the maximum possible color value the driver supports)
             pub box(sx, sy, ex, ey, color, fill_flag)
             pub line(sx, sy, ex, ey, color)
-        build-time symbol DISP_DRIVER defined with the display driver filename
-        Example:
-            flexspin -DDISP_DRIVER=\"display.lcd.st7735\" -DST7789 -DGFX_DIRECT -2 app.spin2
-            (define DISP_DRIVER as the driver filename
-    Operational overview:
-        This object is first initialized with a pointer to your display driver's object
-        The battery gauge can then be drawn in either horizontal ( draw_batt1_horiz() ) or
-            vertical orientation ( draw_batt1_vert() ), respectively. The parameter is the
-            state of charge in whole percent (0..100).
-        The following attributes can optionally be changed:
-            set_bg_color():         set gauge inside fill/background color
-            set_bar_color():        set gauge bars color
-            set_outline_color():    set outline color of gauge
-            set_posxy():            set screen position of gauge
-            set_scale():            set drawing scale factor of gauge (whole numbers >= 1)
-            The defaults are:
-                * color 0 background (usually black)
-                * the display's MAX_COLOR as the gauge outline color
-                * screen position (0, 0)
-                * scale factor 1
-
-        Example:
-
-        obj
-
-            lcd:        DISP_DRIVER
-            batt_gauge: "gui.battery-gauge"
-
-        pub main()
-
-            batt_gauge.attach_display_driver(@lcd)
-            ' or the following, for short:
-            ' batt_gauge.attach(@lcd)
+        a window to draw the gauge to (window_s type from gui.window.spin2)
 }
+
+#include "gui.common.spin2"
+
 
 con
 
-    ' define the requirements of the display driver interface
-    %interface disp_i(
-        pub plot(x, y, c)
-        pub box(x1, y1, x2, y2, c, f)
-        pub line(x1, y1, x2, y2, c)
-    )
+    ' limits
+    MAX_BATT_GAUGES = 1
 
-    ' battery image basic dimensions
-    BATT_WID    = 4
-    BATT_LEN    = 10
+    ' battery gauge default dimensions
+    BATT_WID        = 4
+    BATT_LEN        = 10
 
 
 var
 
-    ' batt gauge attributes
-    long _bar_color, _bg_color, _outline_color
-    word _sx, _sy
-    byte _scale
+    batt_gauge_s    gauge[MAX_BATT_GAUGES]
+    byte            _nr_gauges
 
 
-pub draw_batt1_horiz(^disp_i disp, p) | c, ex, ey, l, s
-' Draw a battery gauge (horizontal layout)
-'   p:  state of charge (percent)
-    p := (0 #> p <# 100) / 10
-    ex := _sx + (BATT_LEN * _scale)
-    ey := _sy + (BATT_WID * _scale)
-    l := (ex-_sx)                               ' get length (scaled) of battery
+pub create(^window_s pwin, x, y): i | wp
+' Create a battery gauge object
+'   pwin:   parent window (pointer to window_s struct)
+'   x, y:   gauge upper-left position (pixels)
+'   Returns:
+'           gauge handle on success (pointer)
+'           0 on failure (exceeded parent window's maximum number of obects,
+'                           or this object's maximum number of gauges)
+    if ( (pwin.nr_obj < MAX_WIN_OBJS) and (_nr_gauges < MAX_BATT_GAUGES) )
+        i := @gauge[_nr_gauges]
+        wp := @gauge[_nr_gauges].widget
+
+        set_type(wp,        OBJ_BATT_GAUGE)
+        set_parent_obj(wp,  @pwin)
+        set_posxy(wp,       x, y)
+        set_dims(wp,        BATT_LEN, BATT_WID)
+        set_bgcolor(wp,     pwin.widget.bgcolor)
+        set_fgcolor(wp,     pwin.widget.fgcolor)
+
+        pwin.object[pwin.nr_obj] := i
+        pwin.nr_obj++
+        _nr_gauges++
+        return
+
+    return 0
+
+
+pub draw(^batt_gauge_s gauge) | ^window_s win, ^dispdrv_i disp, sx, sy, ex, ey, p, l, h, s, c
+' Draw a battery gauge
+'   gauge:  battery gauge data (pointer to batt_gauge_s struct)
+    [win] := gauge.widget.parent                ' get handle on parent window
+    [disp] := win.p_disp                        ' get the display driver interface from the parent
+    sx := win.widget.x+gauge.widget.x
+    sy := win.widget.y+gauge.widget.y
+    ex := sx + gauge.widget.w-1
+    ey := sy + gauge.widget.h-1
+    p := (0 #> gauge.state <# 100)
+    l := (ex-sx)-4                              ' fill length (account for battery body + tab/tip)
+    h := ( (ey-sy)/4 ) #> ey-sy-1               ' battery tab/tip height
 
     ' draw the battery
-    disp.box(_sx, _sy, ex+1, ey, _outline_color, false)
-    disp.line(ex+2, _sy+1, ex+2, ey-1, _outline_color)
+    disp.box(sx, sy, ex-2, ey, gauge.outline_color, false)
+    disp.box(ex-2, sy+h, ex, ey-h, gauge.outline_color, true)
 
     ' draw the state-of-charge
-    s := p * (l / 10)                           ' scaled SoC bar/filled length
     if ( p )
-        repeat c from 0 to s-1
-            disp.line(_sx+1+c, _sy+1, _sx+1+c, ey-1, _bar_color)
+        s := (p * l) / 100                      ' scaled SoC bar/filled length
+        disp.box(sx+1, sy+1, sx+1+s, ey-1, gauge.widget.fgcolor, true)
 
 
-pub draw_batt1_vert(^disp_i disp, p) | c, ex, ey, l, s
-' Draw a battery gauge (vertical layout)
-'   p:  state of charge (percent)
-    p := (0 #> p <# 100) / 10
-    ex := _sx + (BATT_WID * _scale)
-    ey := _sy + (BATT_LEN * _scale)
-    l := (ey-_sy)                               ' length of battery in pixels (after scaling)
-
-    ' draw the battery
-    disp.box(_sx, _sy, ex, ey+1, _outline_color, false)
-    disp.line(_sx+1, _sy-1, ex-1, _sy-1, _outline_color)
-
-    ' draw the state-of-charge
-    s := p * (l / 10)                           ' scaled SoC bar/filled length
-    if ( p )
-        repeat c from 0 to s-1
-            disp.line(_sx+1, ey-c, ex-1, ey-c, _bar_color)
+pub ptr_widget(^batt_gauge_s gauge): ^widget_s ow
+' Get pointer to a battery gauge's widget configuration
+'   gauge:      battery gauge (pointer to batt_gauge_s struct)
+'   Returns:    pointer to widget_s struct
+    return @gauge.widget
 
 
-pub set_bg_color(c)
-' Set battery inside background/fill color
-    _bg_color := c
-
-
-pub set_bar_color(c)
+pub set_bar_color = set_fgcolor
 ' Set battery state of charge bar color
-    _bar_color := c
 
 
-pub set_outline_color(c)
+pub set_outline_color(^batt_gauge_s gauge, c)
 ' Set battery outline color
-    _outline_color := c
+    gauge.outline_color := c
 
 
-pub set_posxy(x, y)
-' Set upper-left screen position of battery gauge
-    _sx := x
-    _sy := y
+pub set_state(^batt_gauge_s gauge, s)
+' Set gauge state of charge
+'   s:  state of charge (percent, 0..100)
+    gauge.state := s
 
 
-pub set_scale(s)
-' Set drawing scale factor
-    _scale := 1 #> s                            ' clamp to minimum of 1
-
-
-DAT
+dat
 {
-Copyright 2025 Jesse Burt
+Copyright 2026 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,

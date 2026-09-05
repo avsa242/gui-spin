@@ -1,0 +1,62 @@
+#include "gui.common.spin2"
+
+con
+
+    MAX_WINDOWS     = 4
+
+
+var
+
+    window_s   window[MAX_WINDOWS]
+    byte        _nr_win
+
+
+pub add_obj(^window_s win, p_obj): s
+
+    if ( pw.nr_obj < MAX_WIN_OBJS )
+        window[_nr_win].object[win.nr_obj] := p_obj
+        return pw.nr_obj                        ' object number
+
+    return -1                                   ' error: object tree full
+
+
+pub create(^dispdrv_i dobj, x, y, w, h, bgc, fgc): i | wp
+
+    if ( _nr_win < MAX_WINDOWS )
+        wp := @window[_nr_win].widget
+        set_type(wp,    OBJ_WINDOW)
+        set_posxy(wp,   x, y)
+        set_dims(wp,    w, h)
+        set_bgcolor(wp, bgc)
+        set_fgcolor(wp, fgc)
+        set_border_color(@window[_nr_win], 0)
+
+        window[_nr_win].p_disp := [dobj]
+        window[_nr_win].nr_obj := 0
+        i := @window[_nr_win]
+        _nr_win++
+        return
+
+    return -1
+
+
+pub draw(^window_s win) | ^dispdrv_i disp, o
+' Draw a window
+'   disp:   pointer to display driver
+'   win:    pointer to window configuration
+    [disp] := win.p_disp
+    disp.box(   win.widget.x, win.widget.y, ...
+                win.widget.x+win.widget.w-1, win.widget.y+win.widget.h-1, ...
+                win.widget.bgcolor, ...
+                true)
+    disp.box(   win.widget.x, win.widget.y, ...
+                win.widget.x+win.widget.w-1, win.widget.y+win.widget.h-1, ...
+                win.brd_color, ...
+                false)
+
+
+pub set_border_color(^window_s win, c)
+
+    win.brd_color := c
+
+

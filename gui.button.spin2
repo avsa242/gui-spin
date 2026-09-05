@@ -14,23 +14,88 @@
 
 con
 
+    ' limits
+    MAX_BUTTONS = 16
+
     ' button states
     UP          = 0
     DOWN        = 1
     PUSHED      = 1
 
-    struct button_s(...
-        long id, ...
-        widget_s widget, ...
-        long text_sz, ...
-        long options, ...
-        long p_text, ...
-        word font_w, ...
-        word font_h, ...
-        byte state)
+
+var
+
+    button_s    button[MAX_BUTTONS]
+    byte        _nr_buttons
 
 
-pub draw(^dispdrv_i disp, ^button_s btn)
+pub create(^window_s pwin, x, y, w, h, fw, fh, p_txt): i | wp
+' Create a button object
+'   pwin:   parent window (pointer to window_s struct)
+'   x, y:   button upper-left position (pixels)
+'   w, h:   button dimensions (pixels)
+'   fw, fh: button text font dimensions (pixels)
+'   p_txt:  button text (pointer to string)
+'   Returns:
+'           button handle on success (pointer)
+'           0 on failure (exceeded parent window's maximum number of obects,
+'                           or this object's maximum number of buttons)
+    if ( (pwin.nr_obj < MAX_WIN_OBJS ) and (_nr_buttons < MAX_BUTTONS) )
+        i := @button[_nr_buttons]
+        wp := @button[_nr_buttons].widget
+
+        set_type(wp,            OBJ_BUTTON)
+        set_parent_obj(wp,      @pwin)
+        set_bgcolor(wp,         pwin.widget.bgcolor)
+        set_fgcolor(wp,         pwin.widget.fgcolor)
+        set_dims(wp,            w, h)
+        set_posxy(wp,           x, y)
+        set_font_sz(i,          fw, fh)
+        set_text(i,             p_txt)
+
+        pwin.object[pwin.nr_obj] := i
+        pwin.nr_obj++
+        _nr_buttons++
+        return
+
+    return 0
+
+
+pub draw(^button_s btn) | ^window_s win, ^dispdrv_i disp, sx, sy, ex, ey
+' Draw a button
+'   btn:    button (pointer to button_s struct)
+    [win] := btn.widget.parent                  ' get handle on parent window
+    [disp] := win.p_disp                        ' get the display driver interface from the parent
+    sx := win.widget.x+btn.widget.x
+    sy := win.widget.y+btn.widget.y
+    ex := sx + btn.widget.w-1
+    ey := sy + btn.widget.h-1
+
+    case btn.state
+        UP:
+            disp.box(   sx, sy, ...
+                        ex, ey, ...
+                        btn.widget.fgcolor, ...
+                        false)
+            disp.fgcolor(btn.widget.fgcolor)
+        DOWN:
+            disp.box(   sx, sy, ...
+                        ex, ey, ...
+                        btn.widget.bgcolor, ...
+                        false)
+            disp.box(   sx+1, sy+1, ...
+                        ex-1, ey-1, ...
+                        btn.widget.fgcolor, ...
+                        true)
+            disp.fgcolor(btn.widget.bgcolor)
+
+    if ( text_len(@btn) )
+        disp.pos_xy(    (sx+(btn.widget.w/2))-((text_len(@btn) * btn.font_w)/2), ...
+                        sy+(btn.widget.h/2)-(btn.font_h/2) )
+        disp.puts(btn.p_text)
+
+
+pub draw_to_disp(^dispdrv_i disp, ^button_s btn)
 ' Draw a button
 '   disp:   display driver interface (pointer to driver object, e.g., @lcd)
 '   btn:    button (pointer to button_s struct)
@@ -46,76 +111,30 @@ pub draw(^dispdrv_i disp, ^button_s btn)
         disp.puts(btn.p_text)
 
 
-pub draw_to_win(^win_cfg_s win, ^button_s btn) | ^dispdrv_i disp, sx, sy, ex, ey
-' Draw a button to a window
-'   win:    pointer to window to draw to
-'   btn:    button (pointer to button_s struct)
-'   NOTE: The window being drawn to MUST have a display driver defined first
-'   NOTE: The position drawn will be relative to the window the plot is drawn to.
-    [disp] := win.p_disp                        ' inherit display driver from window
-
-    ' redefine position relative to the window (for this call only)
-    sx := win.widget.x + btn.widget.x
-    sy := win.widget.y + btn.widget.y
-    ex := sx + btn.widget.w-1
-    ey := sy + btn.widget.h-1
-
-    disp.box(sx, sy, ex, ey, btn.widget.fgcolor, false)
-    if ( text_len(@btn) )
-        disp.pos_xy(    sx+(btn.widget.w/2)-((text_len(@btn) * btn.font_w)/2), ...
-                        sy+(btn.widget.h/2)-(btn.font_h/2) )
-        disp.fgcolor(btn.widget.fgcolor)
-        disp.puts(btn.p_text)
-
-
-pub get_ex(^button_s btn): c
-' Get the ending X coordinate of the button, based on its starting coord and width
-'   btn:    button (pointer to button_s struct)
-    return (btn.widget.x + btn.widget.w)-1
-
-
-pub get_ey(^button_s btn): c
-' Get the ending Y coordinate of the button, based on its starting coord and height
-'   btn:    button (pointer to button_s struct)
-    return (btn.widget.y + btn.widget.h)-1
-
-
-pub get_sx(^button_s btn): c
-' Get the ending X coordinate of the button, based on its starting coord and width
-'   btn:    button (pointer to button_s struct)
-    return btn.widget.x
-
-
-pub get_sy(^button_s btn): c
-' Get the ending X coordinate of the button, based on its starting coord and width
-'   btn:    button (pointer to button_s struct)
-    return btn.widget.y
-
-
 pub min_height(^button_s btn): w
 ' Get the minimum height of a button, considering its font size
 '   btn:    button (pointer to button_s struct)
-    return btn.text_sz
+    return btn.font_h
 
 
 pub min_width(^button_s btn): w
 ' Get the minimum width of a button, considering its font size and length of text
 '   btn:    button (pointer to button_s struct)
-    return text_len(@btn)
+    return text_len(@btn) * btn.font_w
 
 
-pub set_bgcolor(^button_s btn, bgc)
-' Set a button's background (button interior area) color
+pub ptr_widget(^button_s btn): ^widget_s ow
+' Get pointer to a button's widget configuration
+'   btn:        button (pointer to button_s struct)
+'   Returns:    pointer to widget_s struct
+    return @btn.widget
+
+
+pub set_callback(^button_s btn, p_func)
+' Set a button's callback function
 '   btn:    button (pointer to button_s struct)
-'   bgc:    color
-    btn.widget.bgcolor := bgc
-
-
-pub set_fgcolor(^button_s btn, fgc)
-' Set a button's foreground (outline, text) color
-'   btn:    button (pointer to button_s struct)
-'   fgc:    color
-    btn.widget.fgcolor := fgc
+'   p_func: pointer to method/function
+    btn.callback := p_func
 
 
 pub set_font_sz(^button_s btn, w, h)
@@ -126,33 +145,11 @@ pub set_font_sz(^button_s btn, w, h)
     btn.font_h := h
 
 
-pub set_pos(^button_s btn, x, y)
-' Set button position
+pub set_state(^button_s btn, s)
+' Set button state
 '   btn:    button (pointer to button_s struct)
-'   x, y:   upper-left coordinates of button
-    btn.widget.x := x
-    btn.widget.y := y
-
-
-pub set_sx(^button_s btn, x)
-' Set starting X coordinate of button
-'   btn:    button (pointer to button_s struct)
-'   x:      position (pixels)
-    btn.widget.x := x
-
-
-pub set_sy(^button_s btn, y)
-' Set starting Y coordinate of button
-'   btn:    button (pointer to button_s struct)
-'   y:      position (pixels)
-    btn.widget.y := y
-
-
-pub set_height(^button_s btn, h)
-' Set button height
-'   btn:    button (pointer to button_s struct)
-'   h:      height (pixels)
-    btn.widget.h := h
+'   s:      button state
+    btn.state := s
 
 
 pub set_text(^button_s btn, p_text)
@@ -163,13 +160,6 @@ pub set_text(^button_s btn, p_text)
     ifnot ( btn.widget.w )
     ' use button text to set the button's width, if it hasn't yet been set
         btn.widget.w := (strsize(p_text)+1) * btn.font_w
-
-
-pub set_width(^button_s btn, w)
-' Set button width
-'   btn:    button (pointer to button_s struct)
-'   w:      width (pixels)
-    btn.widget.w := w
 
 
 pub text_len(^button_s btn): len
