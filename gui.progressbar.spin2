@@ -54,7 +54,7 @@ pub create(^window_s pwin, x, y, w=PROGBAR_DEF_WID, h=PROGBAR_DEF_HT): i | wp
         set_dims(wp,        w, h)
         set_bgcolor(wp,     pwin.widget.bgcolor)' inherit widget colors from parent
         set_fgcolor(wp,     pwin.widget.fgcolor)
-
+        set_outline_color(i,pwin.widget.bgcolor)
         pwin.object[pwin.nr_obj] := i
         pwin.nr_obj++
         _nr_progbars++
@@ -83,8 +83,8 @@ pub draw(^progressbar_s pbar) | ^window_s win, ^dispdrv_i disp, sx, sy, ex, ey, 
     [win] := pbar.widget.parent                 ' get handle on parent window
     [disp] := win.p_disp                        ' get the display driver interface from the parent
 
-    sx := win.widget.x+pbar.widget.x
-    sy := win.widget.y+pbar.widget.y
+    sx := win.widget.x+pbar.widget.x+1
+    sy := win.widget.y+pbar.widget.y+1
     ex := sx + pbar.widget.w-1
     ey := sy + pbar.widget.h-1
     p := (0 #> pbar.state <# 100)

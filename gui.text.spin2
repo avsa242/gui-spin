@@ -61,8 +61,8 @@ pub draw(^text_label_s txt) | ^window_s win, ^dispdrv_i disp, sx, sy, ex, ey
     [win] := txt.widget.parent                  ' get handle on parent window                  
     [disp] := win.p_disp                        ' get the display driver interface from the parent
 
-    sx := win.widget.x+txt.widget.x             ' use coordinates relative to parent window's
-    sy := win.widget.y+txt.widget.y
+    sx := win.widget.x+txt.widget.x+1           ' use coordinates relative to parent window's
+    sy := win.widget.y+txt.widget.y+1
     ex := sx + txt.widget.w-1
     ey := sy + txt.widget.h-1
 
