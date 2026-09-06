@@ -4,7 +4,7 @@
     Description:    Progress bar GUI widget
     Author:         Jesse Burt
     Started:        
-    Updated:        Sep 5, 2026
+    Updated:        Sep 6, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 
@@ -97,7 +97,7 @@ pub draw(^progressbar_s pbar) | ^window_s win, ^dispdrv_i disp, sx, sy, ex, ey, 
     if ( p )                                    ' only draw if percent > 0
         s := (p * l) / 100                      ' scaled bar/filled length
         disp.box(sx+1, sy+1, sx+1+s, ey-1, pbar.widget.fgcolor, true)
-
+        disp.box(sx+1+s, sy+1, ex-1, ey-1, pbar.widget.bgcolor, true)
 
 pub ptr_widget(^progressbar_s pbar): ^widget_s ow
 ' Get pointer to a progress bar's widget configuration
