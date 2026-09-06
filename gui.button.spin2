@@ -144,13 +144,6 @@ pub ptr_widget(^button_s btn): ^widget_s ow
     return @btn.widget
 
 
-pub set_callback(^button_s btn, p_func)
-' Set a button's callback function
-'   btn:    button (pointer to button_s struct)
-'   p_func: pointer to method/function
-    btn.widget.callback := p_func
-
-
 pub set_font_sz(^button_s btn, w, h)
 ' Set button text font size
 '   btn:    button (pointer to button_s struct)

@@ -157,6 +157,13 @@ pub set_bgcolor(^widget_s ow, c)
     ow.bgcolor := c
 
 
+pub set_callback(^widget_s ow, p_func)
+' Set a widget's callback function
+'   ow:     widget (pointer to widget_s struct)
+'   p_func: pointer to method/function
+    ow.callback := p_func
+
+
 pub set_dims(^widget_s ow, w, h)
 ' Set widget dimensions
 '   ow:     widget (pointer to widget_s struct)
