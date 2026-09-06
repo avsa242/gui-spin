@@ -4,7 +4,7 @@
     Description:    Digital waveform (high/low) plot
     Author:         Jesse Burt
     Started:        Aug 1, 2026
-    Updated:        Aug 23, 2026
+    Updated:        Sep 6, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -86,14 +86,16 @@ pub draw(^digi_plot_s plot) | ^window_s win, le, te, re, be, cx, y, py, s, dur_s
 '   slen:   sample array length
 '   NOTE: The window being drawn to MUST have a display driver defined first
 '   NOTE: The position drawn will be relative to the window the plot is drawn to.
-    [win] := plot.widget.parent                         ' get handle on parent window
-    [disp] := win.p_disp                                    ' inherit display driver from window
+    [win] := plot.widget.parent                 ' get handle on parent window
+    [disp] := win.p_disp                        ' inherit display driver from window
     [cap] := plot.p_plot
+
     ' get base coordinates from the window we're drawing to
-    te := win.widget.y + plot.widget.y                      ' pre-calc top edge
-    le := win.widget.x + plot.widget.x                      ' pre-calc left edge
-    re := win.widget.x + (plot.widget.x + plot.widget.w)-1  ' pre-calc right edge
-    be := win.widget.y + (plot.widget.y + plot.widget.h)-1  ' pre-calc bottom edge
+    te := win.widget.y + plot.widget.y+1        ' pre-calc top edge
+    le := win.widget.x + plot.widget.x+1        ' pre-calc left edge
+    re := le + plot.widget.w-1                  ' pre-calc right edge
+    be := te + plot.widget.h-1                  ' pre-calc bottom edge
+
     cx := le
 
     s := 0
@@ -101,17 +103,17 @@ pub draw(^digi_plot_s plot) | ^window_s win, le, te, re, be, cx, y, py, s, dur_s
 
     disp.box(le, te, re, be, plot.widget.bgcolor, true)     ' clear plot area
 
-    repeat while (cx < re)                                  ' plot until the right edge is reached
+    repeat while (cx < re)                      ' plot until the right edge is reached
         py := te + ( (cap.record[s].state ^ plot.invert_y) * (plot.widget.h-1))
         dur_s := muldiv64(cap.record[s].time, plot.x_zoom, 1_000000) ' scale by zoom factor
-        if ( cap.record[s].state <> ls )                        ' draw transition
+        if ( cap.record[s].state <> ls )        ' draw transition
             disp.vline(cx, te, plot.widget.h, plot.plot_color)
 
         ' draw high or low level
         disp.hline(py, cx, dur_s <# (re-cx), plot.plot_color)
         cx := cx + dur_s <# re
-        ls := cap.record[s].state                               ' remember state for next transition
-        s++                                                 ' next sample
+        ls := cap.record[s].state               ' remember state for next transition
+        s++                                     ' next sample
         if ( s >= cap.len )
             return
 
