@@ -4,7 +4,7 @@
     Description:    Graphical User Interface elements - common code
     Author:         Jesse Burt
     Started:        Mar 24, 2025
-    Updated:        Aug 23, 2026
+    Updated:        Sep 6, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -41,6 +41,7 @@ con
         long type, ...
         long parent, ...
         long bgcolor, fgcolor, ...
+        long event, ...
         word x, y, w, h, ...
         byte touch_id)
 
@@ -198,6 +199,43 @@ pub set_type(^widget_s ow, t)
 '   ow:     widget (pointer to widget_s struct)
 '   t:      widget type (long)
     ow.type := t
+
+
+pub screen_pos(^widget_s ow): x, y | ^window_s pwin
+' Get a widget's absolute screen position
+'   ow:         widget (pointer to widget_s struct)
+'   Returns:    x, y coordinates (pixels)
+    [pwin] := ow.parent
+    x := pwin.widget.x + ow.x                   ' base widget coordinates off of the
+    y := pwin.widget.y + ow.y                   '   parent window's coordinates
+
+
+pub touch_id(^widget_s ow): i
+' Get a widget's touch ID
+'   ow:         widget (pointer to widget_s struct)
+'   Returns:    touch ID
+    return ow.touch_id
+
+
+pub widget_event(^widget_s ow): e
+' Get a widget's event flags
+'   ow:         widget (pointer to widget_s struct)
+'   Returns:    event flags (bitmap)
+    return ow.event
+
+
+pub widget_h(^widget_s ow): h
+' Get a widget's height
+'   ow:         widget (pointer to widget_s struct)
+'   Returns:    height (pixels)
+    return ow.h
+
+
+pub widget_w(^widget_s ow): w
+' Get a widget's width
+'   ow:         widget (pointer to widget_s struct)
+'   Returns:    width (pixels)
+    return ow.w
 
 
 dat

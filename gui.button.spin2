@@ -4,7 +4,7 @@
     Description:    Button GUI element
     Author:         Jesse Burt
     Started:        Aug 22, 2026
-    Updated:        Aug 23, 2026
+    Updated:        Sep 6, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -85,7 +85,7 @@ pub draw(^button_s btn) | ^window_s win, ^dispdrv_i disp, sx, sy, ex, ey
     ex := sx + btn.widget.w-1
     ey := sy + btn.widget.h-1
 
-    case btn.state
+    case btn.widget.event
         UP:
             disp.box(   sx, sy, ...
                         ex, ey, ...
