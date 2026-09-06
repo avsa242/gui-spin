@@ -210,6 +210,17 @@ pub screen_pos(^widget_s ow): x, y | ^window_s pwin
     y := pwin.widget.y + ow.y                   '   parent window's coordinates
 
 
+pub screen_pos_dims(^widget_s ow): x, y, w, h | ^window_s pwin
+' Get a widget's absolute screen position and dimensions
+'   ow:         widget (pointer to widget_s struct)
+'   Returns:    x, y coordinates, w, h dimensions (pixels)
+    [pwin] := ow.parent
+    x := pwin.widget.x + ow.x                   ' base widget coordinates off of the
+    y := pwin.widget.y + ow.y                   '   parent window's coordinates
+    w := ow.w
+    h := ow.h
+
+
 pub touch_id(^widget_s ow): i
 ' Get a widget's touch ID
 '   ow:         widget (pointer to widget_s struct)
