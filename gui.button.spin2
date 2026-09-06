@@ -148,7 +148,7 @@ pub set_callback(^button_s btn, p_func)
 ' Set a button's callback function
 '   btn:    button (pointer to button_s struct)
 '   p_func: pointer to method/function
-    btn.callback := p_func
+    btn.widget.callback := p_func
 
 
 pub set_font_sz(^button_s btn, w, h)
