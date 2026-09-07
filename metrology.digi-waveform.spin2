@@ -4,7 +4,7 @@
     Description:    Digital waveform (high/low) plot
     Author:         Jesse Burt
     Started:        Aug 1, 2026
-    Updated:        Sep 6, 2026
+    Updated:        Sep 7, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -148,6 +148,29 @@ pub draw_to_disp(^dispdrv_i disp, ^digi_plot_s plot, ^sample_s sample, slen) | r
         if ( s >= slen )
             return
 
+
+pub dec_x_zoom(^digi_plot_s plot, v=1)
+' Decrease X zoom factor
+'   plot:   digi-plot (pointer to digi_plot_s struct)
+'   v:      value to decrease zoom factor by (optional; default is 1, or 0.000_001x)
+    plot.x_zoom -= v
+    plot.x_zoom #>= 0_000001
+
+
+pub get_x_zoom(^digi_plot_s plot): z
+' Increase X zoom factor
+'   plot:       digi-plot (pointer to digi_plot_s struct)
+'   Returns:    current zoom factor
+    return plot.x_zoom
+
+
+pub inc_x_zoom(^digi_plot_s plot, v=1)
+' Increase X zoom factor
+'   plot:   digi-plot (pointer to digi_plot_s struct)
+'   v:      value to increase zoom factor by (optional; default is 1, or 0.000_001x)
+    plot.x_zoom += v
+
+
 pub ptr_widget(^digi_plot_s plot): ^widget_s ow
 ' Get pointer to a digi-plot's widget configuration
 '   plot:       digi-plot (pointer to digi_plot_s struct)
@@ -173,7 +196,7 @@ pub set_x_zoom(^digi_plot_s plot, z)
 ' Set waveform X-axis/timescale zoom
 '   plot:   digi-plot (pointer to digi_plot_s struct)
 '   z:      scale factor (in millionths, i.e., 0_000001 = 0.000001, 1_000000 = 1.000000)
-    plot.x_zoom := z
+    plot.x_zoom := 0_000001 #> z
 
 
 dat
