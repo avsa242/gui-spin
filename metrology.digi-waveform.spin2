@@ -34,7 +34,7 @@ var
     byte        _nr_digi_plots
 
 
-pub create(^window_s pwin, x, y, w, h): i | wp
+pub create(^window_s pwin, x, y, w, h): ^digi_plot_s i | ^widget_s wp
 ' Create a digital waveform plot object
 '   pwin:   parent window (pointer to window_s struct)
 '   x, y:   plot upper-left position (pixels)
@@ -44,19 +44,19 @@ pub create(^window_s pwin, x, y, w, h): i | wp
 '           0 on failure (exceeded parent window's maximum number of obects,
 '                           or this object's maximum number of plots)
     if ( (pwin.nr_obj < MAX_WIN_OBJS ) and (_nr_digi_plots < MAX_DIGI_PLOTS) )
-        i := @digi_plot[_nr_digi_plots]
-        wp := @digi_plot[_nr_digi_plots].widget
+        [i] := @digi_plot[_nr_digi_plots]
+        [wp] := @digi_plot[_nr_digi_plots].widget
 
-        set_type(wp,        OBJ_DIGI_PLOT)
-        set_parent_obj(wp,  @pwin)
-        set_posxy(wp,       x, y)
-        set_dims(wp,        w, h)
-        set_bgcolor(wp,     pwin.widget.bgcolor)' inherit widget colors from parent
-        set_fgcolor(wp,     pwin.widget.fgcolor)
-        set_x_zoom(i,       0_001000)           ' default to 0.001x zoom
-        set_plot_color(i,   pwin.widget.fgcolor)' inherit plot color from parent's foreground color
+        set_type(@wp,       OBJ_DIGI_PLOT)
+        set_parent_obj(@wp, @pwin)
+        set_posxy(@wp,      x, y)
+        set_dims(@wp,       w, h)
+        set_bgcolor(@wp,    pwin.widget.bgcolor)' inherit widget colors from parent
+        set_fgcolor(@wp,    pwin.widget.fgcolor)
+        set_x_zoom(@i,      0_001000)           ' default to 0.001x zoom
+        set_plot_color(@i,  pwin.widget.fgcolor)' inherit plot color from parent's foreground color
 
-        pwin.object[pwin.nr_obj] := i
+        pwin.object[pwin.nr_obj] := @i
         pwin.nr_obj++
         _nr_digi_plots++
         return

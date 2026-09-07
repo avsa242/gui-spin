@@ -4,7 +4,7 @@
     Description:    Battery gauge GUI widget
     Author:         Jesse Burt
     Started:        Jan 15, 2024
-    Updated:        Sep 5, 2026
+    Updated:        Sep 7, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 
@@ -34,7 +34,7 @@ var
     byte            _nr_gauges
 
 
-pub create(^window_s pwin, x, y): i | wp
+pub create(^window_s pwin, x, y): ^batt_gauge_s i | ^widget_s wp
 ' Create a battery gauge object
 '   pwin:   parent window (pointer to window_s struct)
 '   x, y:   gauge upper-left position (pixels)
@@ -43,17 +43,17 @@ pub create(^window_s pwin, x, y): i | wp
 '           0 on failure (exceeded parent window's maximum number of obects,
 '                           or this object's maximum number of gauges)
     if ( (pwin.nr_obj < MAX_WIN_OBJS) and (_nr_gauges < MAX_BATT_GAUGES) )
-        i := @gauge[_nr_gauges]
-        wp := @gauge[_nr_gauges].widget
+        [i] := @gauge[_nr_gauges]
+        [wp] := @gauge[_nr_gauges].widget
 
-        set_type(wp,        OBJ_BATT_GAUGE)
-        set_parent_obj(wp,  @pwin)
-        set_posxy(wp,       x, y)
-        set_dims(wp,        BATT_LEN, BATT_WID)
-        set_bgcolor(wp,     pwin.widget.bgcolor)
-        set_fgcolor(wp,     pwin.widget.fgcolor)
+        set_type(@wp,        OBJ_BATT_GAUGE)
+        set_parent_obj(@wp,  @pwin)
+        set_posxy(@wp,       x, y)
+        set_dims(@wp,        BATT_LEN, BATT_WID)
+        set_bgcolor(@wp,     pwin.widget.bgcolor)
+        set_fgcolor(@wp,     pwin.widget.fgcolor)
 
-        pwin.object[pwin.nr_obj] := i
+        pwin.object[pwin.nr_obj] := @i
         pwin.nr_obj++
         _nr_gauges++
         return
