@@ -171,6 +171,19 @@ pub inc_x_zoom(^digi_plot_s plot, v=1)
     plot.x_zoom += v
 
 
+pub invert_y(^digi_plot_s plot, i=-1)
+' Invert drawing of the plot (y-axis)
+'   plot:   digi-plot (pointer to digi_plot_s struct)
+'   i:      invert flag (optional)
+'               if unspecified (or -1), flip current state
+'               if 0, don't invert y-axis plotting
+'               if non-zero, invert y-axis plotting
+    if ( i == -1 )                              ' flip current state
+        plot.invert_y := plot.invert_y ^ 1
+    else                                        ' set state explicitly
+        plot.invert_y := (i <> 0) & 1           ' non-zero = invert, 0 = no inversion
+
+
 pub ptr_widget(^digi_plot_s plot): ^widget_s ow
 ' Get pointer to a digi-plot's widget configuration
 '   plot:       digi-plot (pointer to digi_plot_s struct)
