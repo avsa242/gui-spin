@@ -35,6 +35,9 @@ con
         pub puts(p_str)
     )
 
+    struct callback_s(...
+        long on_press, ...
+        long on_release)
 
     ' configuration structure used by all widgets
     struct widget_s( ...
@@ -42,7 +45,7 @@ con
         long parent, ...
         long bgcolor, fgcolor, ...
         long event, ...
-        long callback, ...
+        callback_s  callback, ...
         word x, y, w, h, ...
         byte touch_id)
 
@@ -126,6 +129,11 @@ con
     OBJ_DIGI_PLOT   = 100
 
 
+    ' event types
+    EVT_ON_PRESS    = 1 << 0
+    EVT_ON_RELEASE  = 1 << 1
+
+
 pub get_bgcolor(^widget_s ow): c
 ' Get a widget's background color
 '   ow:         widget (pointer to widget_s struct)
@@ -195,11 +203,16 @@ pub set_bgcolor(^widget_s ow, c)
     ow.bgcolor := c
 
 
-pub set_callback(^widget_s ow, p_func)
+pub set_callback(^widget_s ow, evt, p_func)
 ' Set a widget's callback function
 '   ow:     widget (pointer to widget_s struct)
+'   evt:    event to assign callback to
 '   p_func: pointer to method/function
-    ow.callback := p_func
+    case evt
+        EVT_ON_PRESS:
+            ow.callback.on_press := p_func
+        EVT_ON_RELEASE:
+            ow.callback.on_release := p_func
 
 
 pub set_dims(^widget_s ow, w, h)

@@ -47,6 +47,8 @@ pub create(^window_s pwin, x, y, w, h, fw, fh, p_txt): i | wp
 
         set_type(wp,            OBJ_BUTTON)
         set_parent_obj(wp,      @pwin)
+        set_callback(wp,        EVT_ON_PRESS, 0)
+        set_callback(wp,        EVT_ON_DEPRESS, 0)
         set_bgcolor(wp,         _def_bgcolor)   ' use previously set default colors
         set_fgcolor(wp,         _def_fgcolor)
         set_dims(wp,            w, h)
