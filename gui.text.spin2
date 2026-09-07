@@ -9,10 +9,51 @@ con
 var
 
     text_label_s    label[MAX_TEXT_LABELS]
+    text_label_s    defaults
+
     byte            _nr_labels
 
 
-pub create(^window_s pwin, x, y, w, h, p_fnt, p_str): i | wp
+pub create(^window_s pwin, p_str): ^text_label_s i | ^widget_s wp
+' Create a text label object
+'   pwin:   parent window (pointer to window_s struct)
+'   p_str:  pointer to string for text label
+'   Returns:
+'           handle of text label on success (pointer)
+'           0 on failure (exceeded window's maximum number of objects
+'                           or this object's maximum number of text labels)
+    if ( (pwin.nr_obj < MAX_WIN_OBJS ) and (_nr_labels < MAX_TEXT_LABELS) )
+        [i] := @label[_nr_labels]
+        [wp] := @label[_nr_labels].widget
+
+        ' use the defaults as a template for the new text label
+        bytemove(@label[_nr_labels], @defaults, sizeof(text_label_s) )
+        set_type(@wp,       OBJ_TEXT_LABEL)
+        set_parent_obj(@wp, @pwin)
+        set_str(@i,         p_str)
+
+        ' check if the label will fit at the current window cursor
+        if ( ((pwin.cursor.x + wp.w) < (pwin.widget.x+pwin.widget.w-1)) and ...
+             ((pwin.cursor.y + wp.h) < (pwin.widget.y+pwin.widget.h-1)) )
+            set_posxy(@wp,       pwin.cursor.x, pwin.cursor.y)
+
+            ' move the window's cursor for the next object
+            pwin.cursor.x += wp.w+pwin.grid_spacing_x
+            if ( pwin.cursor.x > (pwin.widget.x+pwin.widget.w-1) )
+                pwin.cursor.x := (pwin.widget.x+pwin.grid_spacing_x)
+                pwin.cursor.y += wp.h+pwin.grid_spacing_y
+            if ( pwin.cursor.y > (pwin.widget.y+pwin.widget.h-1) )
+                pwin.cursor.y := pwin.widget.y
+
+        pwin.object[pwin.nr_obj] := @i
+        pwin.nr_obj++
+        _nr_labels++
+        return
+
+    return 0
+
+
+pub create_explicit(^window_s pwin, x, y, w, h, p_fnt, p_str): i | wp
 ' Create a text label object
 '   pwin:   parent window (pointer to window_s struct)
 '   x, y:   upper-left coordinates of label (pixels)
@@ -39,6 +80,7 @@ pub create(^window_s pwin, x, y, w, h, p_fnt, p_str): i | wp
         return
 
     return 0
+
 
 
 pub destroy(^text_label_s txt): s
@@ -79,10 +121,43 @@ pub ptr_widget(^text_label_s txt): ^widget_s ow
     return @txt.widget
 
 
+pub set_default_bgcolor(c)
+' Set default background color for buttons to be used when created
+'   c:  color
+    defaults.widget.bgcolor := c
+
+
+pub set_default_fgcolor(c)
+' Set default foreground color for buttons to be used when created
+'   c:  color
+    defaults.widget.fgcolor := c
+
+
+pub set_default_dims(w, h)
+' Set default dimensions for new buttons
+    defaults.widget.w := w
+    defaults.widget.h := h
+
+
+pub set_default_font(p_fnt)
+' Set default font for new text labels
+'   p_fnt:  font setup (pointer)
+    defaults.p_fnt := p_fnt
+
+
+pub set_default_font_sz(w, h)
+' Set default font size for new labels
+'   w, h:   font size (pixels)
+    defaults.font_w := w
+    defaults.font_h := h
+
+
 pub set_str(^text_label_s txt, p_str)
 ' Set a text label's string
 '   txt:    text label (pointer to text_label_s struct)
 '   p_str:  pointer to string
     txt.p_str := p_str
+    ifnot ( txt.widget.w )                      ' size the label automatically if it isn't defined
+        txt.widget.w := (strsize(p_str) ) * txt.font_w
 
 
