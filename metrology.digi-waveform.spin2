@@ -30,12 +30,54 @@ obj
 
 var
 
-    digi_plot_s  digi_plot[MAX_DIGI_PLOTS]
+    digi_plot_s digi_plot[MAX_DIGI_PLOTS]
+    digi_plot_s defaults
     byte        _nr_digi_plots
 
 
-pub create(^window_s pwin, x, y, w, h): ^digi_plot_s i | ^widget_s wp
-' Create a digital waveform plot object
+pub create(^window_s pwin): ^digi_plot_s i | ^widget_s wp
+' Create a digital waveform plot object (use currently set defaults)
+'   pwin:   parent window (pointer to window_s struct)
+'   x, y:   plot upper-left position (pixels)
+'   w, h:   plot dimensions (pixels)
+'   Returns:
+'           plot handle on success (pointer)
+'           0 on failure (exceeded parent window's maximum number of obects,
+'                           or this object's maximum number of plots)
+    if ( (pwin.nr_obj < MAX_WIN_OBJS ) and (_nr_digi_plots < MAX_DIGI_PLOTS) )
+        [i] := @digi_plot[_nr_digi_plots]
+        [wp] := @digi_plot[_nr_digi_plots].widget
+
+        ' use the currently set defaults as a template for the new button
+        bytemove(@digi_plot[_nr_digi_plots], @defaults, sizeof(digi_plot_s) )
+        set_type(@wp,       OBJ_DIGI_PLOT)
+        set_parent_obj(@wp, @pwin)
+        set_x_zoom(@i,      0_001000)           ' default to 0.001x zoom
+        set_plot_color(@i,  pwin.widget.fgcolor)' inherit plot color from parent's foreground color
+
+        ' check if the plot will fit at the current window cursor
+        if ( ((pwin.cursor.x + wp.w) < (pwin.widget.x+pwin.widget.w-1)) and ...
+             ((pwin.cursor.y + wp.h) < (pwin.widget.y+pwin.widget.h-1)) )
+            set_posxy(@wp,       pwin.cursor.x, pwin.cursor.y)
+
+            ' move the window's cursor for the next object
+            pwin.cursor.x += wp.w+pwin.grid_spacing_x
+            if ( pwin.cursor.x > (pwin.widget.x+pwin.widget.w-1) )
+                pwin.cursor.x := (pwin.widget.x+pwin.grid_spacing_x)
+                pwin.cursor.y += wp.h+pwin.grid_spacing_y
+            if ( pwin.cursor.y > (pwin.widget.y+pwin.widget.h-1) )
+                pwin.cursor.y := pwin.widget.y
+
+        pwin.object[pwin.nr_obj] := @i
+        pwin.nr_obj++
+        _nr_digi_plots++
+        return
+
+    return 0
+
+
+pub create_explicit(^window_s pwin, x, y, w, h): ^digi_plot_s i | ^widget_s wp
+' Create a digital waveform plot object (set parameters explicitly)
 '   pwin:   parent window (pointer to window_s struct)
 '   x, y:   plot upper-left position (pixels)
 '   w, h:   plot dimensions (pixels)
@@ -189,6 +231,24 @@ pub ptr_widget(^digi_plot_s plot): ^widget_s ow
 '   plot:       digi-plot (pointer to digi_plot_s struct)
 '   Returns:    pointer to widget_s struct
     return @plot.widget
+
+
+pub set_default_bgcolor(c)
+' Set default background color for buttons to be used when created
+'   c:  color
+    defaults.widget.bgcolor := c
+
+
+pub set_default_fgcolor(c)
+' Set default foreground color for buttons to be used when created
+'   c:  color
+    defaults.widget.fgcolor := c
+
+
+pub set_default_dims(w, h)
+' Set default dimensions for new buttons
+    defaults.widget.w := w
+    defaults.widget.h := h
 
 
 pub set_plot_color(^digi_plot_s plot, c)
