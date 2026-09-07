@@ -30,10 +30,9 @@ var
     byte        _nr_buttons
 
 
-pub create(^window_s pwin, x, y, w, h, fw, fh, p_txt): i | wp
+pub create(^window_s pwin, w, h, fw, fh, p_txt): i | wp
 ' Create a button object
 '   pwin:   parent window (pointer to window_s struct)
-'   x, y:   button upper-left position (pixels)
 '   w, h:   button dimensions (pixels)
 '   fw, fh: button text font dimensions (pixels)
 '   p_txt:  button text (pointer to string)
@@ -52,9 +51,21 @@ pub create(^window_s pwin, x, y, w, h, fw, fh, p_txt): i | wp
         set_bgcolor(wp,         _def_bgcolor)   ' use previously set default colors
         set_fgcolor(wp,         _def_fgcolor)
         set_dims(wp,            w, h)
-        set_posxy(wp,           x, y)
         set_font_sz(i,          fw, fh)
         set_text(i,             p_txt)
+
+        if (    ((pwin.cursor.x + w) < (pwin.widget.x+pwin.widget.w-1)) and ...
+                ((pwin.cursor.y + h) < (pwin.widget.y+pwin.widget.h-1)) )
+            ' check if the button will fit at the current window cursor
+            set_posxy(wp,       pwin.cursor.x, pwin.cursor.y)
+
+            ' move the window's cursor past the button
+            pwin.cursor.x += button[_nr_buttons].widget.w+pwin.grid_spacing_x
+            if ( pwin.cursor.x > (pwin.widget.x+pwin.widget.w-1) )
+                pwin.cursor.x := (pwin.widget.x+pwin.grid_spacing_x)
+                pwin.cursor.y += h+pwin.grid_spacing_y
+            if ( pwin.cursor.y > (pwin.widget.y+pwin.widget.h-1) )
+                pwin.cursor.y := pwin.widget.y
 
         pwin.object[pwin.nr_obj] := i
         pwin.nr_obj++

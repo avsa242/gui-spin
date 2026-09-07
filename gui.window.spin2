@@ -53,6 +53,8 @@ pub create(^dispdrv_i dobj, x, y, w, h): i | wp
         set_bgcolor(wp, _def_bgcolor)
         set_fgcolor(wp, _def_fgcolor)
         set_border_color(i, 0)
+        set_grid_spacing(i, 2, 2)               ' set grid spacing and initial cursor position
+        set_cursor(i, window[_nr_win].grid_spacing_x, window[_nr_win].grid_spacing_y)
 
         window[_nr_win].p_disp := [dobj]
         window[_nr_win].nr_obj := 0
@@ -102,6 +104,14 @@ pub set_border_color(^window_s win, c)
     win.brd_color := c
 
 
+pub set_cursor(^window_s win, x, y)
+' Set a window's current object cursor position
+'   win:    window (pointer to window_s struct)
+'   x, y:   cursor position
+    win.cursor.x := x
+    win.cursor.y := y
+
+
 pub set_default_border_color(c)
 ' Set default border color for windows to be used when creaated
 '   c:  color
@@ -118,6 +128,15 @@ pub set_default_fgcolor(c)
 ' Set default foreground color for windows to be used when created
 '   c:  color
     _def_fgcolor := c
+
+
+pub set_grid_spacing(^window_s win, spx, spy)
+' Set a window's inter-object grid spacing
+'   win:    window (pointer to window_s struct)
+'   spx:    x-axis spacing
+'   spy:    y-axis spacing
+    win.grid_spacing_x := spx
+    win.grid_spacing_y := spy
 
 
 dat
