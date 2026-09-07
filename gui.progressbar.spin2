@@ -3,7 +3,7 @@
     Filename:       gui.progressbar.spin2
     Description:    Progress bar GUI widget
     Author:         Jesse Burt
-    Started:        
+    Started:        Sep 5, 2026
     Updated:        Sep 6, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
@@ -23,18 +23,53 @@ con
     ' limits
     MAX_PROGRESS_BARS   = 1
 
-    ' progress bar default dimensions
-    PROGBAR_DEF_WID     = 4
-    PROGBAR_DEF_HT      = 10
-
 
 var
 
     progressbar_s   prog_bar[MAX_PROGRESS_BARS]
+    progressbar_s   defaults
+
     byte            _nr_progbars
 
 
-pub create(^window_s pwin, x, y, w=PROGBAR_DEF_WID, h=PROGBAR_DEF_HT): i | wp
+pub create(^window_s pwin): ^progressbar_s i | ^widget_s wp
+' Create a progress bar object (use currently set defaults)
+'   pwin:   parent window (pointer to window_s struct)
+'   Returns:
+'           progress bar handle on success (pointer)
+'           0 on failure (exceeded parent window's maximum number of obects,
+'                           or this object's maximum number of buttons)
+    if ( (pwin.nr_obj < MAX_WIN_OBJS) and (_nr_progbars < MAX_PROGRESS_BARS) )
+        [i] := @prog_bar[_nr_progbars]          ' cache local pointers to progressbar object struct
+        [wp] := @prog_bar[_nr_progbars].widget  '   and widget sub-struct
+
+        ' set up widget basic configuration
+        bytemove(@prog_bar[_nr_progbars], @defaults, sizeof(progressbar_s) )
+        set_type(@wp,       OBJ_PROGRESS_BAR)
+        set_parent_obj(@wp, @pwin)
+
+        ' check if the label will fit at the current window cursor
+        if ( ((pwin.cursor.x + wp.w) < (pwin.widget.x+pwin.widget.w-1)) and ...
+             ((pwin.cursor.y + wp.h) < (pwin.widget.y+pwin.widget.h-1)) )
+            set_posxy(@wp,  pwin.cursor.x, pwin.cursor.y)
+
+            ' move the window's cursor for the next object
+            pwin.cursor.x += wp.w+pwin.grid_spacing_x
+            if ( pwin.cursor.x > (pwin.widget.x+pwin.widget.w-1) )
+                pwin.cursor.x := (pwin.widget.x+pwin.grid_spacing_x)
+                pwin.cursor.y += wp.h+pwin.grid_spacing_y
+            if ( pwin.cursor.y > (pwin.widget.y+pwin.widget.h-1) )
+                pwin.cursor.y := pwin.widget.y
+
+        pwin.object[pwin.nr_obj] := @i
+        pwin.nr_obj++
+        _nr_progbars++
+        return
+
+    return 0
+
+
+pub create_explicit(^window_s pwin, x, y, w, h): i | wp
 ' Create a progress bar object
 '   pwin:   parent window (pointer to window_s struct)
 '   x, y:   button upper-left position (pixels)
@@ -108,6 +143,29 @@ pub ptr_widget(^progressbar_s pbar): ^widget_s ow
 
 pub set_bar_color = set_fgcolor
 ' Set battery state of charge bar color
+
+
+pub set_default_bgcolor(c)
+' Set default background color for buttons to be used when created
+'   c:  color
+    defaults.widget.bgcolor := c
+
+
+pub set_default_fgcolor(c)
+' Set default foreground color for buttons to be used when created
+'   c:  color
+    defaults.widget.fgcolor := c
+
+
+pub set_default_dims(w, h)
+' Set default dimensions for new buttons
+    defaults.widget.w := w
+    defaults.widget.h := h
+
+
+pub set_default_outline_color(c)
+' Set progressbar outline color
+    defaults.outline_color := c
 
 
 pub set_outline_color(^progressbar_s pbar, c)
