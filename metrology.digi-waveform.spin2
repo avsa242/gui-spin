@@ -49,7 +49,7 @@ pub create(^window_s pwin): ^digi_plot_s i | ^widget_s wp
         [wp] := @digi_plot[_nr_digi_plots].widget
 
         ' use the currently set defaults as a template for the new button
-        bytemove(@digi_plot[_nr_digi_plots], @defaults, sizeof(digi_plot_s) )
+        bytemove(@i, @defaults, sizeof(digi_plot_s) )
         set_type(@wp,       OBJ_DIGI_PLOT)
         set_parent_obj(@wp, @pwin)
         set_x_zoom(@i,      0_001000)           ' default to 0.001x zoom

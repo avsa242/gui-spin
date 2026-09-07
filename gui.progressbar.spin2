@@ -44,7 +44,7 @@ pub create(^window_s pwin): ^progressbar_s i | ^widget_s wp
         [wp] := @prog_bar[_nr_progbars].widget  '   and widget sub-struct
 
         ' set up widget basic configuration
-        bytemove(@prog_bar[_nr_progbars], @defaults, sizeof(progressbar_s) )
+        bytemove(@i, @defaults, sizeof(progressbar_s) )
         set_type(@wp,       OBJ_PROGRESS_BAR)
         set_parent_obj(@wp, @pwin)
 

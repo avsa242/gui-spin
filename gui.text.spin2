@@ -38,7 +38,7 @@ pub create(^window_s pwin, p_str): ^text_label_s i | ^widget_s wp
         [wp] := @label[_nr_labels].widget
 
         ' use the defaults as a template for the new text label
-        bytemove(@label[_nr_labels], @defaults, sizeof(text_label_s) )
+        bytemove(@i, @defaults, sizeof(text_label_s) )
         set_type(@wp,       OBJ_TEXT_LABEL)
         set_parent_obj(@wp, @pwin)
         set_str(@i,         p_str)

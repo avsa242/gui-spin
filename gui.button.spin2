@@ -45,7 +45,7 @@ pub create(^window_s pwin, p_txt=0): ^button_s i | ^widget_s wp
         [wp] := @button[_nr_buttons].widget     '   and widget sub-struct
 
         ' use the currently set defaults as a template for the new button
-        bytemove(@button[_nr_buttons], @defaults, sizeof(button_s) )
+        bytemove(@i, @defaults, sizeof(button_s) )
         set_type(@wp,            OBJ_BUTTON)
         set_parent_obj(@wp,      @pwin)
         set_text(@i,             p_txt)
