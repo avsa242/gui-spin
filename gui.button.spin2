@@ -4,7 +4,7 @@
     Description:    Button GUI element
     Author:         Jesse Burt
     Started:        Aug 22, 2026
-    Updated:        Sep 6, 2026
+    Updated:        Sep 7, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -26,6 +26,7 @@ con
 var
 
     button_s    button[MAX_BUTTONS]
+    long        _def_fgcolor, _def_bgcolor
     byte        _nr_buttons
 
 
@@ -46,8 +47,8 @@ pub create(^window_s pwin, x, y, w, h, fw, fh, p_txt): i | wp
 
         set_type(wp,            OBJ_BUTTON)
         set_parent_obj(wp,      @pwin)
-        set_bgcolor(wp,         pwin.widget.bgcolor)
-        set_fgcolor(wp,         pwin.widget.fgcolor)
+        set_bgcolor(wp,         _def_bgcolor)   ' use previously set default colors
+        set_fgcolor(wp,         _def_fgcolor)
         set_dims(wp,            w, h)
         set_posxy(wp,           x, y)
         set_font_sz(i,          fw, fh)
@@ -142,6 +143,18 @@ pub ptr_widget(^button_s btn): ^widget_s ow
 '   btn:        button (pointer to button_s struct)
 '   Returns:    pointer to widget_s struct
     return @btn.widget
+
+
+pub set_default_bgcolor(c)
+' Set default background color for buttons to be used when created
+'   c:  color
+    _def_bgcolor := c
+
+
+pub set_default_fgcolor(c)
+' Set default foreground color for buttons to be used when created
+'   c:  color
+    _def_fgcolor := c
 
 
 pub set_font_sz(^button_s btn, w, h)

@@ -1,3 +1,14 @@
+{
+----------------------------------------------------------------------------------------------------
+    Filename:       gui.window.spin2
+    Description:    Generic window GUI widget
+    Author:         Jesse Burt
+    Started:        Aug 5, 2026
+    Updated:        Sep 7, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
+}
+
 #include "gui.common.spin2"
 
 con
@@ -7,12 +18,18 @@ con
 
 var
 
-    window_s   window[MAX_WINDOWS]
+    window_s    window[MAX_WINDOWS]
+    long        _def_border_color, _def_bgcolor, _def_fgcolor
     byte        _nr_win
 
 
 pub add_obj(^window_s win, p_obj): s
-
+' Add an object to a window
+'   win:        window (pointer to window_s struct)
+'   p_obj:      pointer to GUI object
+'   Returns:
+'               index in window object buffer on success (0..MAX_WIN_OBJS-1)
+'               -1 on failure (object buffer/tree full)
     if ( pw.nr_obj < MAX_WIN_OBJS )
         window[_nr_win].object[win.nr_obj] := p_obj
         return pw.nr_obj                        ' object number
@@ -20,20 +37,25 @@ pub add_obj(^window_s win, p_obj): s
     return -1                                   ' error: object tree full
 
 
-pub create(^dispdrv_i dobj, x, y, w, h, bgc, fgc): i | wp
-
+pub create(^dispdrv_i dobj, x, y, w, h): i | wp
+' Create a window
+'   dobj:       display driver object (pointer to child object symbol, e.g., @lcd)
+'   x, y:       upper-left position on screen (pixels)
+'   w, h:       dimensions of window (pixels)
+'   Returns:    window handle (pointer)
     if ( _nr_win < MAX_WINDOWS )
-        wp := @window[_nr_win].widget
+        wp := @window[_nr_win].widget           ' cache pointer to the window's widget struct
+        i := @window[_nr_win]                   '   and the window itself
+
         set_type(wp,    OBJ_WINDOW)
         set_posxy(wp,   x, y)
         set_dims(wp,    w, h)
-        set_bgcolor(wp, bgc)
-        set_fgcolor(wp, fgc)
-        set_border_color(@window[_nr_win], 0)
+        set_bgcolor(wp, _def_bgcolor)
+        set_fgcolor(wp, _def_fgcolor)
+        set_border_color(i, 0)
 
         window[_nr_win].p_disp := [dobj]
         window[_nr_win].nr_obj := 0
-        i := @window[_nr_win]
         _nr_win++
         return
 
@@ -41,8 +63,9 @@ pub create(^dispdrv_i dobj, x, y, w, h, bgc, fgc): i | wp
 
 
 pub destroy(^window_s win): i | o
-
-    if ( (_nr_win > 0) and win.p_disp )
+' Destroy a window
+'   win:    window (pointer to window_s struct)
+    if ( (_nr_win > 0) and win.p_disp )         ' basic checks before clearing memory
         win~
         i := _nr_win
         _nr_win--
@@ -53,7 +76,6 @@ pub destroy(^window_s win): i | o
 
 pub draw(^window_s win) | ^dispdrv_i disp, o
 ' Draw a window
-'   disp:   pointer to display driver
 '   win:    pointer to window configuration
     [disp] := win.p_disp
     disp.box(   win.widget.x, win.widget.y, ...
@@ -66,8 +88,55 @@ pub draw(^window_s win) | ^dispdrv_i disp, o
                 false)
 
 
-pub set_border_color(^window_s win, c)
+pub ptr_widget(^window_s win): ^widget_s ow
+' Get pointer to a window's widget configuration
+'   win:        window (pointer to window_s struct)
+'   Returns:    pointer to widget_s struct
+    return @win.widget
 
+
+pub set_border_color(^window_s win, c)
+' Set a window's border color
+'   win:    window (pointer to window_s struct)
+'   c:      color
     win.brd_color := c
 
+
+pub set_default_border_color(c)
+' Set default border color for windows to be used when creaated
+'   c:  color
+    _def_border_color := c
+
+
+pub set_default_bgcolor(c)
+' Set default background color for windows to be used when created
+'   c:  color
+    _def_bgcolor := c
+
+
+pub set_default_fgcolor(c)
+' Set default foreground color for windows to be used when created
+'   c:  color
+    _def_fgcolor := c
+
+
+dat
+{
+Copyright (c) 2026 Jesse Burt
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+}
 

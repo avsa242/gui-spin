@@ -4,7 +4,7 @@
     Description:    Graphical User Interface elements - common code
     Author:         Jesse Burt
     Started:        Mar 24, 2025
-    Updated:        Sep 6, 2026
+    Updated:        Sep 7, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -126,28 +126,66 @@ con
     OBJ_DIGI_PLOT   = 100
 
 
+pub get_bgcolor(^widget_s ow): c
+' Get a widget's background color
+'   ow:         widget (pointer to widget_s struct)
+'   Returns:    color
+    return ow.bgcolor
+
+
 pub get_ex(^widget_s ow): c
-' Get the ending X coordinate of the button, based on its starting coord and width
-'   btn:    button (pointer to button_s struct)
-    return (ow.x + ow.w)-1
+' Get a widget's ending X coordinate of the button
+'   ow:         widget (pointer to widget_s struct)
+'   Returns:    coordinate
+    return (ow.x + ow.w)-1                      ' start + width
 
 
 pub get_ey(^widget_s ow): c
-' Get the ending Y coordinate of the button, based on its starting coord and height
-'   ow:    button (pointer to button_s struct)
-    return (ow.y + ow.h)-1
+' Get a widget's ending Y coordinate of the button
+'   ow:         widget (pointer to widget_s struct)
+'   Returns:    coordinate
+    return (ow.y + ow.h)-1                      ' start + height
+
+
+pub get_fgcolor(^widget_s ow): c
+' Get a widget's foreground color
+'   ow:         widget (pointer to widget_s struct)
+'   Returns:    color
+    return ow.fgcolor
 
 
 pub get_sx(^widget_s ow): c
-' Get the ending X coordinate of the button, based on its starting coord and width
-'   ow:    button (pointer to button_s struct)
+' Get a widget's starting X coordinate
+'   ow:         widget (pointer to widget_s struct)
+'   Returns:    coordinate
     return ow.x
 
 
 pub get_sy(^widget_s ow): c
-' Get the ending X coordinate of the button, based on its starting coord and width
-'   ow:    button (pointer to button_s struct)
+' Get a widget's starting Y coordinate
+'   ow:         widget (pointer to widget_s struct)
+'   Returns:    coordinate
     return ow.y
+
+
+pub screen_pos(^widget_s ow): x, y | ^window_s pwin
+' Get a widget's absolute screen position
+'   ow:         widget (pointer to widget_s struct)
+'   Returns:    x, y coordinates (pixels)
+    [pwin] := ow.parent
+    x := pwin.widget.x + ow.x                   ' base widget coordinates off of the
+    y := pwin.widget.y + ow.y                   '   parent window's coordinates
+
+
+pub screen_pos_dims(^widget_s ow): x, y, w, h | ^window_s pwin
+' Get a widget's absolute screen position and dimensions
+'   ow:         widget (pointer to widget_s struct)
+'   Returns:    x, y coordinates, w, h dimensions (pixels)
+    [pwin] := ow.parent
+    x := pwin.widget.x + ow.x                   ' base widget coordinates off of the
+    y := pwin.widget.y + ow.y                   '   parent window's coordinates
+    w := ow.w
+    h := ow.h
 
 
 pub set_bgcolor(^widget_s ow, c)
@@ -206,26 +244,6 @@ pub set_type(^widget_s ow, t)
 '   ow:     widget (pointer to widget_s struct)
 '   t:      widget type (long)
     ow.type := t
-
-
-pub screen_pos(^widget_s ow): x, y | ^window_s pwin
-' Get a widget's absolute screen position
-'   ow:         widget (pointer to widget_s struct)
-'   Returns:    x, y coordinates (pixels)
-    [pwin] := ow.parent
-    x := pwin.widget.x + ow.x                   ' base widget coordinates off of the
-    y := pwin.widget.y + ow.y                   '   parent window's coordinates
-
-
-pub screen_pos_dims(^widget_s ow): x, y, w, h | ^window_s pwin
-' Get a widget's absolute screen position and dimensions
-'   ow:         widget (pointer to widget_s struct)
-'   Returns:    x, y coordinates, w, h dimensions (pixels)
-    [pwin] := ow.parent
-    x := pwin.widget.x + ow.x                   ' base widget coordinates off of the
-    y := pwin.widget.y + ow.y                   '   parent window's coordinates
-    w := ow.w
-    h := ow.h
 
 
 pub touch_id(^widget_s ow): i
