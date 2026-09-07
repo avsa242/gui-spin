@@ -26,9 +26,8 @@ con
 var
 
     button_s    button[MAX_BUTTONS]
-    long        _def_fgcolor, _def_bgcolor
-    word        _def_width, _def_height
-    byte        _def_font_w, _def_font_h
+    button_s    defaults
+
     byte        _nr_buttons
 
 
@@ -45,14 +44,10 @@ pub create(^window_s pwin, p_txt=0): ^button_s i | ^widget_s wp
         [i] := @button[_nr_buttons]             ' cache local pointers to button object struct
         [wp] := @button[_nr_buttons].widget     '   and widget sub-struct
 
+        ' use the currently set defaults as a template for the new button
+        bytemove(@button[_nr_buttons], @defaults, sizeof(button_s) )
         set_type(@wp,            OBJ_BUTTON)
         set_parent_obj(@wp,      @pwin)
-        set_callback(@wp,        EVT_ON_PRESS, 0)
-        set_callback(@wp,        EVT_ON_RELEASE, 0)
-        set_bgcolor(@wp,         _def_bgcolor)
-        set_fgcolor(@wp,         _def_fgcolor)
-        set_dims(@wp,            _def_width, _def_height)
-        set_font_sz(@i,          _def_font_w, _def_font_h)
         set_text(@i,             p_txt)
 
         ' check if the button will fit at the current window cursor
@@ -197,25 +192,25 @@ pub ptr_widget(^button_s btn): ^widget_s ow
 pub set_default_bgcolor(c)
 ' Set default background color for buttons to be used when created
 '   c:  color
-    _def_bgcolor := c
+    defaults.widget.bgcolor := c
 
 
 pub set_default_fgcolor(c)
 ' Set default foreground color for buttons to be used when created
 '   c:  color
-    _def_fgcolor := c
+    defaults.widget.fgcolor := c
 
 
 pub set_default_dims(w, h)
 ' Set default dimensions for new buttons
-    _def_width := w
-    _def_height := h
+    defaults.widget.w := w
+    defaults.widget.h := h
 
 
 pub set_default_font_sz(w, h)
 ' Set default font size for new buttons
-    _def_font_w := w
-    _def_font_h := h
+    defaults.font_w := w
+    defaults.font_h := h
 
 
 pub set_font_sz(^button_s btn, w, h)
