@@ -17,6 +17,13 @@ This is a P8X32A/Propeller, P2X8C4M64P/Propeller 2 library of GUI-related elemen
 * (P1, P2): Frequency spectrum plot using FFT
 * (P2): Waterfall plot
 * (P2): Digital (high/low) waveform plot
+* Windowed/hierarchical GUI system (P2 only; windowing branch):
+    * window
+    * button
+    * text label
+    * progress bar
+    * battery gauge
+    * digital (high/low) waveform plot
 
 
 ## Requirements
