@@ -4,7 +4,7 @@
     Description:    Battery gauge GUI widget
     Author:         Jesse Burt
     Started:        Jan 15, 2024
-    Updated:        Sep 7, 2026
+    Updated:        Sep 8, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 
@@ -31,11 +31,50 @@ con
 var
 
     batt_gauge_s    gauge[MAX_BATT_GAUGES]
+    batt_gauge_s    defaults
+
     byte            _nr_gauges
 
 
-pub create(^window_s pwin, x, y): ^batt_gauge_s i | ^widget_s wp
-' Create a battery gauge object
+pub create(^window_s pwin): ^batt_gauge_s i | ^widget_s wp
+' Create a battery gauge object (use currently set defaults)
+'   pwin:   parent window (pointer to window_s struct)
+'   Returns:
+'           gauge handle on success (pointer)
+'           0 on failure (exceeded parent window's maximum number of obects,
+'                           or this object's maximum number of gauges)
+    if ( (pwin.nr_obj < MAX_WIN_OBJS) and (_nr_gauges < MAX_BATT_GAUGES) )
+        [i] := @gauge[_nr_gauges]
+        [wp] := @gauge[_nr_gauges].widget
+
+        ' use the defaults as a template for the new text label
+        bytemove(@i, @defaults, sizeof(batt_gauge_s) )
+        set_type(@wp,        OBJ_BATT_GAUGE)
+        set_parent_obj(@wp,  @pwin)
+
+        ' check if the label will fit at the current window cursor
+        if ( ((pwin.cursor.x + wp.w) < (pwin.widget.x+pwin.widget.w-1)) and ...
+             ((pwin.cursor.y + wp.h) < (pwin.widget.y+pwin.widget.h-1)) )
+            set_posxy(@wp,       pwin.cursor.x, pwin.cursor.y)
+
+            ' move the window's cursor for the next object
+            pwin.cursor.x += wp.w+pwin.grid_spacing_x
+            if ( pwin.cursor.x > (pwin.widget.x+pwin.widget.w-1) )
+                pwin.cursor.x := (pwin.widget.x+pwin.grid_spacing_x)
+                pwin.cursor.y += wp.h+pwin.grid_spacing_y
+            if ( pwin.cursor.y > (pwin.widget.y+pwin.widget.h-1) )
+                pwin.cursor.y := pwin.widget.y
+
+        pwin.object[pwin.nr_obj] := @i
+        pwin.nr_obj++
+        _nr_gauges++
+        return
+
+    return 0
+
+
+pub create_explicit(^window_s pwin, x, y): ^batt_gauge_s i | ^widget_s wp
+' Create a battery gauge object (set parameters explicitly)
 '   pwin:   parent window (pointer to window_s struct)
 '   x, y:   gauge upper-left position (pixels)
 '   Returns:
@@ -107,6 +146,24 @@ pub ptr_widget(^batt_gauge_s gauge): ^widget_s ow
 
 pub set_bar_color = set_fgcolor
 ' Set battery state of charge bar color
+
+
+pub set_default_bgcolor(c)
+' Set default background color for new battery gauges
+'   c:  color
+    defaults.widget.bgcolor := c
+
+
+pub set_default_fgcolor(c)
+' Set default foreground color for new battery gauges
+'   c:  color
+    defaults.widget.fgcolor := c
+
+
+pub set_default_dims(w, h)
+' Set default dimensions for new battery gauges
+    defaults.widget.w := w
+    defaults.widget.h := h
 
 
 pub set_outline_color(^batt_gauge_s gauge, c)
