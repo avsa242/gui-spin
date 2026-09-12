@@ -4,7 +4,7 @@
     Description:    Graphical User Interface elements - common code
     Author:         Jesse Burt
     Started:        Mar 24, 2025
-    Updated:        Sep 7, 2026
+    Updated:        Sep 12, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -34,10 +34,13 @@ con
         pub pos_xy(x, y)
         pub puts(p_str)
     )
+    struct cb_func_s(...
+        long p_func, ...                        ' callback function
+        long p_user)                            ' ptr to user data to feed the callback function
 
     struct callback_s(...
-        long on_press, ...
-        long on_release)
+        cb_func_s on_press, ...
+        cb_func_s on_release)
 
     ' configuration structure used by all widgets
     struct widget_s( ...
@@ -211,16 +214,18 @@ pub set_bgcolor(^widget_s ow, c)
     ow.bgcolor := c
 
 
-pub set_callback(^widget_s ow, evt, p_func)
+pub set_callback(^widget_s ow, evt, p_func, p_user=0)
 ' Set a widget's callback function
 '   ow:     widget (pointer to widget_s struct)
 '   evt:    event to assign callback to
 '   p_func: pointer to method/function
     case evt
         EVT_ON_PRESS:
-            ow.callback.on_press := p_func
+            ow.callback.on_press.p_func := p_func
+            ow.callback.on_press.p_user := p_user
         EVT_ON_RELEASE:
-            ow.callback.on_release := p_func
+            ow.callback.on_release.p_func := p_func
+            ow.callback.on_release.p_user := p_user
 
 
 pub set_dims(^widget_s ow, w, h)
