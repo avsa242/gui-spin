@@ -4,7 +4,7 @@
     Description:    Generic window GUI widget
     Author:         Jesse Burt
     Started:        Aug 5, 2026
-    Updated:        Sep 7, 2026
+    Updated:        Sep 13, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -109,6 +109,20 @@ pub set_cursor(^window_s win, x, y)
 '   win:    window (pointer to window_s struct)
 '   x, y:   cursor position
     win.cursor.x := x
+    win.cursor.y := y
+
+
+pub set_cursor_x(^window_s win, x)
+'' Set a window's current object cursor position (X-axis only)
+'   win:    window (pointer to window_s struct)
+'   x:      X cursor position
+    win.cursor.x := x
+
+
+pub set_cursor_y(^window_s win, y)
+' Set a window's current object cursor position (Y-axis only)
+'   win:    window (pointer to window_s struct)
+'   y:      Y cursor position
     win.cursor.y := y
 
 
