@@ -4,7 +4,7 @@
     Description:    Progress bar GUI widget
     Author:         Jesse Burt
     Started:        Sep 5, 2026
-    Updated:        Sep 8, 2026
+    Updated:        Sep 13, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 
@@ -126,13 +126,15 @@ pub draw(^progressbar_s pbar) | ^window_s win, ^dispdrv_i disp, sx, sy, ex, ey, 
     l := (ex-sx)-2                              ' fill length (account for bar outline too)
 
     ' draw the outline
-    disp.box(sx, sy, ex, ey, pbar.outline_color, false)
+    if ( pbar.opts & OPT_DRAW_OUTLINE )
+        disp.box(sx, sy, ex, ey, pbar.outline_color, false)
 
     ' draw the progress bar itself
     if ( p )                                    ' only draw if percent > 0
         s := (p * l) / 100                      ' scaled bar/filled length
         disp.box(sx+1, sy+1, sx+1+s, ey-1, pbar.widget.fgcolor, true)
         disp.box(sx+1+s, sy+1, ex-1, ey-1, pbar.widget.bgcolor, true)
+
 
 pub ptr_widget(^progressbar_s pbar): ^widget_s ow
 ' Get pointer to a progress bar's widget configuration
@@ -163,18 +165,32 @@ pub set_default_dims(w, h)
     defaults.widget.h := h
 
 
+pub set_default_opts(o)
+' Set default options for new progressbars
+    defaults.opts := o
+
+
 pub set_default_outline_color(c)
-' Set outline color for new progressbars
+' Set default outline color for new progressbars
     defaults.outline_color := c
+
+
+pub set_opts(^progressbar_s pbar, o)
+' Set progressbar options
+'   pbar:   progress bar (pointer to progressbar_s struct)
+'   o:      options
+    pbar.opts := o
 
 
 pub set_outline_color(^progressbar_s pbar, c)
 ' Set progressbar outline color
+'   pbar:   progress bar (pointer to progressbar_s struct)
     pbar.outline_color := c
 
 
 pub set_state(^progressbar_s pbar, s)
 ' Set progress bar percentage
+'   pbar:   progress bar (pointer to progressbar_s struct)
 '   s:  percentage (0..100)
     pbar.state := s
 
