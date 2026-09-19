@@ -4,7 +4,7 @@
     Description:    Text label GUI widget
     Author:         Jesse Burt
     Started:        Sep 5, 2026
-    Updated:        Sep 8, 2026
+    Updated:        Sep 19, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -41,6 +41,7 @@ pub create(^window_s pwin, p_str): ^text_label_s i | ^widget_s wp
         bytemove(@i, @defaults, sizeof(text_label_s) )
         set_type(@wp,       OBJ_TEXT_LABEL)
         set_parent_obj(@wp, @pwin)
+        set_dims(@wp,       i.font_w * strsize(p_str), i.font_h)
         set_str(@i,         p_str)
 
         ' check if the label will fit at the current window cursor
