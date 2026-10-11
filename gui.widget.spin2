@@ -1,0 +1,46 @@
+{Spin2_v45}
+
+
+con
+
+    ' widget header
+    struct widget_s(...
+        long type, ...                          ' GUI widget type
+        long p_disp, ...                        ' display driver pointer
+        long parent, ...                        ' reference to parent widget/object
+        long draw, ...                          ' draw function pointer
+        word abs_x, abs_y, ...                  ' screen coordinates    xxx review: needed?
+        word x, y, w, h)                        ' position, dimensions
+
+    ' widget types
+    TYPE_WINDOW     = 1
+    TYPE_BUTTON     = 2
+    TYPE_TEXTLABEL  = 3
+
+
+#include "gui-common.spin2"
+
+pub set_widget_x(^widget_s obj_w, x)
+
+    obj_w.x := x
+
+
+pub set_widget_y(^widget_s obj_w, y)
+
+    obj_w.y := y
+
+
+pub widget_area(^widget_s obj_w): sx, sy, ex, ey
+
+    sx := obj_w.x
+    sy := obj_w.y
+    ex := sx+obj_w.w-1
+    ey := sy+obj_w.h-1
+
+
+pub obj_type(^widget_s obj_w): t
+
+    return obj_w.type
+
+
+

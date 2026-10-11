@@ -1,273 +1,149 @@
-{
-----------------------------------------------------------------------------------------------------
-    Filename:       gui.button.spin2
-    Description:    Button GUI element
-    Author:         Jesse Burt
-    Started:        Aug 22, 2026
-    Updated:        Sep 19, 2026
-    Copyright (c) 2026 - See end of file for terms of use.
-----------------------------------------------------------------------------------------------------
-}
 {Spin2_v45}
 
-#include "gui.common.spin2"
 
 con
 
-    ' limits
-    MAX_BUTTONS = 16
+    WIDGET_TYPE         = wgui.TYPE_BUTTON
 
-    ' button states
-    UP          = 0
-    DOWN        = 1
-    PUSHED      = 1
+    MAX_BUTTONS         = 16
+    MAX_OBJECTS         = 1
+
+    ' option flags
+    FLAG_DRAW_OUTLINE   = 1 << 0
+    FLAG_DRAW_FILL      = 1 << 1
+
+
+    ' default settings
+    DEF_WIDTH           = 128
+    DEF_HEIGHT          = 64
+    DEF_BORDER_COLOR    = 1
+    DEF_FILL_COLOR      = 0
+    DEF_FLAGS           = FLAG_DRAW_OUTLINE | FLAG_DRAW_FILL
+
+#include "gui-common.spin2"
+#include "container-common.spin2"
+
+
+obj
+
+    wgui: "gui.widget"
+    window: "gui.window"
+
+
+con
+
+    struct widget_s = wgui.widget_s
+    struct window_s = window.window_s
+
+
+    struct button_s(...
+        widget_s widget, ...
+        long border_color, ...
+        long fill_color, ...
+        long flags, ...
+        container_s container, ...
+        byte count, ...
+        byte state)
+
 
 
 var
 
     button_s    button[MAX_BUTTONS]
-    button_s    defaults
-
     byte        _nr_buttons
 
 
-pub create(^window_s pwin, p_txt=0): ^button_s i | ^widget_s wp
-' Create a button object (use currently set defaults)
-'   pwin:   parent window (pointer to window_s struct)
-'   p_txt:  button text (pointer to string; optional)
-'   Returns:
-'           button handle on success (pointer)
-'           0 on failure (exceeded parent window's maximum number of objects,
-'                           or this object's maximum number of buttons)
+pub create(^window_s win, w=0, h=0): ^button_s btn
 
-    if ( (pwin.nr_obj < MAX_WIN_OBJS ) and (_nr_buttons < MAX_BUTTONS) )
-        [i] := @button[_nr_buttons]             ' cache local pointers to button object struct
-        [wp] := @button[_nr_buttons].widget     '   and widget sub-struct
+    if ( _nr_buttons < MAX_BUTTONS )
+        if ( w < 1 )
+            w := DEF_WIDTH
+        if ( h < 1 )
+            h := DEF_HEIGHT
 
-        ' use the currently set defaults as a template for the new button
-        bytemove(@i, @defaults, sizeof(button_s) )
-        set_type(@wp,            OBJ_BUTTON)
-        set_parent_obj(@wp,      @pwin)
-        set_text(@i,             p_txt)
+        [btn] := @button[_nr_buttons]
+        btn.widget.x := win.container.cursor.x
+        btn.widget.y := win.container.cursor.y
+        btn.widget.w := w
+        btn.widget.h := h
+        btn.widget.abs_x := win.widget.abs_x+btn.widget.x
+        btn.widget.abs_y := win.widget.abs_y+btn.widget.y
+        btn.widget.type := wgui.TYPE_BUTTON
+        btn.widget.p_disp := win.widget.p_disp
+        btn.widget.parent := [win]  ' save a reference to the parent window
+        btn.widget.draw := @draw
 
-        DEBUG("window cursor is ", udec_(pwin.cursor.x), udec_(pwin.cursor.y) )
-        ' check if the button will fit at the current window cursor
-        if ( ((pwin.cursor.x + wp.w) < (pwin.widget.x+pwin.widget.w-1)) and ...
-             ((pwin.cursor.y + wp.h) < (pwin.widget.y+pwin.widget.h-1)) )
-            set_posxy(@wp,       pwin.cursor.x, pwin.cursor.y)
+        btn.container.cursor.x := 0
+        btn.container.cursor.y := 0
 
-            ' move the window's cursor for the next object
-            pwin.cursor.x += wp.w+pwin.grid_spacing_x
-            if ( pwin.cursor.x > (pwin.widget.x+pwin.widget.w-1) )
-                pwin.cursor.x := (pwin.widget.x+pwin.grid_spacing_x)
-                pwin.cursor.y += wp.h+pwin.grid_spacing_y
-            if ( pwin.cursor.y > (pwin.widget.y+pwin.widget.h-1) )
-                pwin.cursor.y := pwin.widget.y
+        btn.state := 1
+        btn.flags := DEF_FLAGS
 
-        pwin.object[pwin.nr_obj] := @i
-        pwin.nr_obj++
+        longfill(@btn.container.buffer, 0, MAX_OBJECTS)
+        btn.count := 0
+
         _nr_buttons++
+        DEBUG("[button] create: x=", udec_(btn.widget.x), " y=", udec_(btn.widget.y), " w=", udec_(btn.widget.w), " h=", udec_(btn.widget.h) )
+
         return
 
+    DEBUG("[button] create: error; out of memory")
     return 0
 
 
-pub create_explicit(^window_s pwin, x, y, w, h, bgc, fgc, fw, fh, p_txt): i | wp
-' Create a button object (set parameters explicitly)
-'   pwin:       parent window (pointer to window_s struct)
-'   x, y:       button position (pixels; relative to parent window)
-'   w, h:       button dimensions (pixels)
-'   bgc, fgc:   background, foreground color
-'   fw, fh:     button text font dimensions (pixels)
-'   p_txt:      button text (pointer to string)
-'   Returns:
-'               button handle on success (pointer)
-'               0 on failure (exceeded parent window's maximum number of objects,
-'                           or this object's maximum number of buttons)
-    if ( (pwin.nr_obj < MAX_WIN_OBJS ) and (_nr_buttons < MAX_BUTTONS) )
-        i := @button[_nr_buttons]
-        wp := @button[_nr_buttons].widget
+pub draw(p_btn=0) | ^button_s btn, ^dispdrv_i disp, ^window_s pwin, sx, sy, ex, ey
 
-        set_type(wp,        OBJ_BUTTON)
-        set_parent_obj(wp,  @pwin)
-        set_callback(wp,    EVT_ON_PRESS, 0)
-        set_callback(wp,    EVT_ON_RELEASE, 0)
-        set_bgcolor(wp,     bgc)
-        set_fgcolor(wp,     fgc)
-        set_dims(wp,        w, h)
-        set_font_sz(i,      fw, fh)
-        set_text(i,         p_txt)
-        set_posxy(wp,       x, y)
+    ifnot ( p_btn )                             ' get the button's handle from the caller,
+        [btn] := %self                          '   if none was specified
+    else
+        [btn] := p_btn
 
-        pwin.object[pwin.nr_obj] := i
-        pwin.nr_obj++
-        _nr_buttons++
+    [disp] := btn.widget.p_disp
+    [pwin] := btn.widget.parent
+
+    sx := btn.widget.x
+    sy := btn.widget.y
+    ex := (btn.widget.x + btn.widget.w-1)
+    ey := btn.widget.y + btn.widget.h-1
+
+    if ( btn.flags & FLAG_DRAW_OUTLINE )
+        disp.box(sx, sy, ex, ey, btn.border_color, false)
+    if ( btn.flags & FLAG_DRAW_FILL )
+        disp.box(sx+1, sy+1, ex-1, ey-1, btn.fill_color, true)
+
+
+pub obj_attach(^button_s btn, p_obj): n | ^widget_s wp, ex, ey                                          
+' Attach a GUI object to a window's tree
+'   win:    window
+'   p_obj:  pointer to object structure
+    n := btn.container.count
+    if ( n < MAX_OBJECTS )
+        [wp] := p_obj
+
+        ' move the container cursor by the size of the object,
+        '   wrapping around to the left/top if needed
+        btn.container.cursor.x += wp.w
+        if ( btn.container.cursor.x > (btn.widget.x+btn.widget.w-1) )
+            btn.container.cursor.x := 0
+            btn.container.cursor.y += wp.h
+            if ( btn.container.cursor.y > (btn.widget.y+btn.widget.h-1) )
+                btn.container.cursor.y := 0
+
+        btn.container.buffer[n] := p_obj                ' add the object's pointer
+
+        btn.container.count++
+
         return
 
-    return 0
+    return -1
 
 
-pub destroy(^button_s btn): s
-' Destroy a button object
-'   plot:       button (pointer to button_s struct)
-'   Returns:    number of buttons before destruction
-    if ( (_nr_buttons > 0) and (btn.widget.type == OBJ_BUTTON) )
-    ' do some basic safeguards before just clearing memory
-        btn~
-        s := _nr_buttons
-        _nr_buttons--
-        return
+pub set_border_color(^button_s btn, c)
 
-    return false
+    btn.border_color := c
 
 
-pub draw(^button_s btn) | ^window_s win, ^dispdrv_i disp, sx, sy, ex, ey
-' Draw a button
-'   btn:    button (pointer to button_s struct)
-    [win] := btn.widget.parent                  ' get handle on parent window
-    [disp] := win.p_disp                        ' get the display driver interface from the parent
-    sx := win.widget.x+btn.widget.x
-    sy := win.widget.y+btn.widget.y
-    ex := sx + btn.widget.w-1
-    ey := sy + btn.widget.h-1
+pub set_fill_color(^button_s btn, c)
 
-    case btn.widget.event
-        UP:
-            disp.box(   sx, sy, ...
-                        ex, ey, ...
-                        btn.widget.fgcolor, ...
-                        false)
-            disp.fgcolor(btn.widget.fgcolor)
-        DOWN:
-            disp.box(   sx, sy, ...
-                        ex, ey, ...
-                        btn.widget.bgcolor, ...
-                        false)
-            disp.box(   sx+1, sy+1, ...
-                        ex-1, ey-1, ...
-                        btn.widget.fgcolor, ...
-                        true)
-            disp.fgcolor(btn.widget.bgcolor)
-
-    if ( text_len(@btn) )
-        disp.pos_xy(    (sx+(btn.widget.w/2))-((text_len(@btn) * btn.font_w)/2), ...
-                        sy+(btn.widget.h/2)-(btn.font_h/2) )
-        disp.puts(btn.p_text)
-
-
-pub draw_to_disp(^dispdrv_i disp, ^button_s btn)
-' Draw a button
-'   disp:   display driver interface (pointer to driver object, e.g., @lcd)
-'   btn:    button (pointer to button_s struct)
-    disp.box(   btn.widget.x, btn.widget.y, ...
-                btn.widget.x+btn.widget.w-1, btn.widget.y+btn.widget.h-1, ...
-                btn.widget.fgcolor, ...
-                false)
-
-    if ( text_len(@btn) )
-        disp.pos_xy(    (btn.widget.x+(btn.widget.w/2))-((text_len(@btn) * btn.font_w)/2), ...
-                        btn.widget.y+(btn.widget.h/2)-(btn.font_h/2) )
-        disp.fgcolor(btn.widget.fgcolor)
-        disp.puts(btn.p_text)
-
-
-pub min_height(^button_s btn): w
-' Get the minimum height of a button, considering its font size
-'   btn:    button (pointer to button_s struct)
-    return btn.font_h
-
-
-pub min_width(^button_s btn): w
-' Get the minimum width of a button, considering its font size and length of text
-'   btn:    button (pointer to button_s struct)
-    return text_len(@btn) * btn.font_w
-
-
-pub ptr_widget(^button_s btn): ^widget_s ow
-' Get pointer to a button's widget configuration
-'   btn:        button (pointer to button_s struct)
-'   Returns:    pointer to widget_s struct
-    return @btn.widget
-
-
-pub set_default_bgcolor(c)
-' Set default background color for new buttons
-'   c:  color
-    defaults.widget.bgcolor := c
-
-
-pub set_default_fgcolor(c)
-' Set default foreground color for new buttons
-'   c:  color
-    defaults.widget.fgcolor := c
-
-
-pub set_default_dims(w, h)
-' Set default dimensions for new buttons
-    defaults.widget.w := w
-    defaults.widget.h := h
-
-
-pub set_default_font_sz(w, h)
-' Set default font size for new buttons
-    defaults.font_w := w
-    defaults.font_h := h
-
-
-pub set_font_sz(^button_s btn, w, h)
-' Set button text font size
-'   btn:    button (pointer to button_s struct)
-'   w, h:   font size (pixels)
-    btn.font_w := w
-    btn.font_h := h
-
-
-pub set_state(^button_s btn, s)
-' Set button state
-'   btn:    button (pointer to button_s struct)
-'   s:      button state
-    btn.state := s
-
-
-pub set_text(^button_s btn, p_text)
-' Set button text
-'   btn:    button (pointer to button_s struct)
-'   p_text: text string (pointer)
-    btn.p_text := p_text
-
-    ifnot ( btn.widget.w )
-    ' use button text to set the button's width, if it hasn't yet been set
-        btn.widget.w := (strsize(p_text)+1) * btn.font_w
-
-    ifnot ( btn.widget.h )
-    ' same with the height
-        btn.widget.h := btn.font_h+2
-
-
-pub text_len(^button_s btn): len
-' Get the length of the text string pointed to by the button definition
-'   btn:    button (pointer to button_s struct)
-    len := strsize(btn.p_text)
-
-
-
-dat
-{
-Copyright 2026 Jesse Burt
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-associated documentation files (the "Software"), to deal in the Software without restriction,
-including without limitation the rights to use, copy, modify, merge, publish, distribute,
-sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or
-substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
-NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
-OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-}
+    btn.fill_color := c
 

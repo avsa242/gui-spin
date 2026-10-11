@@ -1,175 +1,244 @@
-{
-----------------------------------------------------------------------------------------------------
-    Filename:       gui.window.spin2
-    Description:    Generic window GUI widget
-    Author:         Jesse Burt
-    Started:        Aug 5, 2026
-    Updated:        Sep 13, 2026
-    Copyright (c) 2026 - See end of file for terms of use.
-----------------------------------------------------------------------------------------------------
-}
+{Spin2_v45}
 
-#include "gui.common.spin2"
 
 con
 
-    MAX_WINDOWS     = 4
+    WIDGET_TYPE         = wgui.TYPE_WINDOW
+
+    ' limits
+    MAX_WINDOWS         = 4
+    MAX_OBJECTS         = 16
+
+    ' option flags
+    FLAG_DRAW_OUTLINE   = 1 << 0
+    FLAG_DRAW_FILL      = 1 << 1
+
+    ' default settings
+    DEF_WIDTH           = 128
+    DEF_HEIGHT          = 64
+    DEF_BORDER_COLOR    = 1
+    DEF_FILL_COLOR      = 0
+    DEF_GRID_X          = 1
+    DEF_GRID_Y          = 1
+    DEF_FLAGS           = FLAG_DRAW_OUTLINE | FLAG_DRAW_FILL
+
+
+
+#include "gui-common.spin2"
+#include "container-common.spin2"
+
+obj
+
+    wgui: "gui.widget"
+
+
+con
+
+    struct widget_s = wgui.widget_s
+
+    struct window_s(...
+        widget_s widget, ...
+        container_s container, ...
+        long flags, ...
+        long border_color, ...
+        long fill_color, ...
+        word grid_x, ...
+        word grid_y)
 
 
 var
 
     window_s    window[MAX_WINDOWS]
-    long        _def_border_color, _def_bgcolor, _def_fgcolor
     byte        _nr_win
 
 
-pub add_obj(^window_s win, p_obj): s
-' Add an object to a window
-'   win:        window (pointer to window_s struct)
-'   p_obj:      pointer to GUI object
-'   Returns:
-'               index in window object buffer on success (0..MAX_WIN_OBJS-1)
-'               -1 on failure (object buffer/tree full)
-    if ( pw.nr_obj < MAX_WIN_OBJS )
-        window[_nr_win].object[win.nr_obj] := p_obj
-        return pw.nr_obj                        ' object number
-
-    return -1                                   ' error: object tree full
+pub area(^window_s win): sx, sy, ex, ey
+' Get the area occupied by a window
+'   win:        handle of window
+'   Returns:    area (four longs)
+    return win.widget.x, win.widget.y, win.widget.x+win.widget.w-1, win.widget.y+win.widget.h-1
 
 
-pub create(^dispdrv_i dobj, x, y, w, h): i | wp
+pub create(^dispdrv_i dobj, x, y, w=0, h=0, gx=0, gy=0): ^window_s win
 ' Create a window
-'   dobj:       display driver object (pointer to child object symbol, e.g., @lcd)
-'   x, y:       upper-left position on screen (pixels)
-'   w, h:       dimensions of window (pixels)
-'   Returns:    window handle (pointer)
+'   dobj:       display driver object instance (pointer to object)
+'   x, y:       upper-left corner of window's position (pixels)
+'   w, h:       dimensions (pixels)
+'   gx, gy:     grid spacing of contained GUI objects (pixels)
+'   Returns:    window handle (pointer to window_s struct)
     if ( _nr_win < MAX_WINDOWS )
-        wp := @window[_nr_win].widget           ' cache pointer to the window's widget struct
-        i := @window[_nr_win]                   '   and the window itself
+        if ( w < 1 )
+            w := DEF_WIDTH
+        if ( h < 1 )
+            h := DEF_HEIGHT
 
-        set_type(wp,    OBJ_WINDOW)
-        set_posxy(wp,   x, y)
-        set_dims(wp,    w, h)
-        set_bgcolor(wp, _def_bgcolor)
-        set_fgcolor(wp, _def_fgcolor)
-        set_border_color(i, 0)
-        set_grid_spacing(i, 2, 2)               ' set grid spacing and initial cursor position
-        set_cursor(i, window[_nr_win].grid_spacing_x, window[_nr_win].grid_spacing_y)
+        [win] := @window[_nr_win]               ' point to next available window memory
 
-        window[_nr_win].p_disp := [dobj]
-        window[_nr_win].nr_obj := 0
+        win.widget.type := wgui.TYPE_WINDOW     ' set up widget header
+        win.widget.x := x
+        win.widget.y := y
+        win.widget.w := w
+        win.widget.h := h
+        win.widget.abs_x := x
+        win.widget.abs_y := y
+
+        window[_nr_win].widget.p_disp := [dobj]        ' point to display driver object
+        win.grid_x := gx                        ' set the new window's grid spacing
+        win.grid_y := gy
+        ifnot ( win.grid_x )                    ' (default to 1 if not specified)
+            win.grid_x := DEF_GRID_X
+        ifnot ( win.grid_y )
+            win.grid_y := DEF_GRID_Y
+
+        win.container.cursor.x := win.grid_x    ' init window cursor to upper left corner+grid size
+        win.container.cursor.y := win.grid_y
+
+        ' initialize/clear object buffer
+        longfill(@win.container.buffer, 0, MAX_OBJECTS)
+        win.container.count := 0
+
+        win.flags := DEF_FLAGS
+
         _nr_win++
+        DEBUG("[win] create: x=", udec_(win.widget.x), " y=", udec_(win.widget.y), " abs_x=", udec_(win.widget.abs_x), " abs_y=", udec_(win.widget.abs_y) )
+
+        return
+
+    DEBUG("[win] create: error; out of memory")
+    return 0
+
+
+pub count(): t
+' Get the number of defined windows
+    return _nr_win
+
+
+pub display_ptr(^window_s win): p
+' Get a window's attached display driver object
+    return win.widget.p_disp
+
+
+pub draw(p_win=0) | ^window_s win, ^dispdrv_i disp, x, y
+' Draw a window
+'   p_win:  window handle (optional; default is to read from parent struct)
+    ifnot ( p_win )                             ' get the pointer from the caller,
+        [win] := %self                          '   if none was specified
+    else
+        [win] := p_win
+
+    [disp] := win.widget.p_disp
+
+    x := win.widget.abs_x
+    y := win.widget.abs_y
+
+    if ( win.flags & FLAG_DRAW_OUTLINE )        ' show the window outline
+        disp.box(   x, y, ...
+                    x+win.widget.w-1, y+win.widget.h-1, ...
+                    win.border_color, ...
+                    false)
+
+    if ( win.flags & FLAG_DRAW_FILL )           ' show fill area inside the outline
+        disp.box(   x+1, y+1, ...
+                    x+win.widget.w-2, y+win.widget.h-2, ...
+                    win.fill_color, ...
+                    true)
+
+
+pub obj_attach(^window_s win, p_obj): n | ^widget_s wp, ex, ey
+' Attach a GUI object to a window's tree
+'   win:    window
+'   p_obj:  pointer to object structure
+    n := win.container.count
+    if ( n < MAX_OBJECTS )
+        [wp] := p_obj
+        DEBUG("[win] obj_attach: obj type ", udec_(wp.type), " w=", udec_(wp.w) )
+        DEBUG("[win] obj_attach: cursor before ", udec_(win.container.cursor.x), udec_(win.container.cursor.y) )
+        win.container.buffer[n] := p_obj                ' add the object's pointer
+        win.container.count++
+
+        ' move the window cursor by the size of the obj, wrapping around to the left (or top)
+        win.container.cursor.x += (wp.w+win.grid_x)
+
+        if ( win.container.cursor.x > (win.widget.x+win.widget.w-1) )
+            DEBUG("[win] obj_attach: cursor.x=", udec_(win.container.cursor.x), "; wrapping")
+            win.container.cursor.x := win.grid_x
+            win.container.cursor.y += wp.h+win.grid_y
+        if ( win.container.cursor.y > (win.widget.y+win.widget.h-1) )
+            DEBUG("[win] obj_attach: cursor.y=", udec_(win.container.cursor.y), "; wrapping")
+            win.container.cursor.x := win.grid_x
+            win.container.cursor.y := win.grid_y
+
+        DEBUG("[win] obj_attach: cursor after ", udec_(win.container.cursor.x), udec_(win.container.cursor.y) )
         return
 
     return -1
 
 
-pub destroy(^window_s win): i | o
-' Destroy a window
-'   win:    window (pointer to window_s struct)
-    if ( (_nr_win > 0) and win.p_disp )         ' basic checks before clearing memory
-        win~
-        i := _nr_win
-        _nr_win--
-        return
+pub fit_cursor(^window_s win, w, h)
 
-    return false
-
-
-pub draw(^window_s win) | ^dispdrv_i disp, o
-' Draw a window
-'   win:    pointer to window configuration
-    [disp] := win.p_disp
-    disp.box(   win.widget.x, win.widget.y, ...
-                win.widget.x+win.widget.w-1, win.widget.y+win.widget.h-1, ...
-                win.widget.bgcolor, ...
-                true)
-    disp.box(   win.widget.x, win.widget.y, ...
-                win.widget.x+win.widget.w-1, win.widget.y+win.widget.h-1, ...
-                win.brd_color, ...
-                false)
+    if ( (win.container.cursor.x+w) > (win.widget.x+win.widget.w-1) )
+        DEBUG("[win] fit_cursor: cursor.x=", udec_(win.container.cursor.x), "; wrapping")
+        win.container.cursor.x := win.grid_x
+        win.container.cursor.y += h+win.grid_y
+    if ( win.container.cursor.y > (win.widget.y+win.widget.h-1) )
+        DEBUG("[win] fit_cursor: cursor.y=", udec_(win.container.cursor.y), "; wrapping")
+        win.container.cursor.x := win.grid_x
+        win.container.cursor.y := win.grid_y
 
 
-pub ptr_widget(^window_s win): ^widget_s ow
-' Get pointer to a window's widget configuration
-'   win:        window (pointer to window_s struct)
-'   Returns:    pointer to widget_s struct
-    return @win.widget
+pub obj_detach(^window_s win, p_obj): o
+' Detach an object by its handle
+'   win:        window
+'   p_obj:    pointer to object
+    repeat o from 0 to win.container.count-1    ' find the object's pointer in the tree
+        if ( win.container.buffer[o] == p_obj ) ' matching pointer?
+            if ( o < (MAX_OBJECTS-1) )          ' pack pointers downwards if we're not at the end
+                longmove(   @win.container.buffer[o], ...
+                            @win.container.buffer[o+1], ...
+                            MAX_OBJECTS-1-o)
+            win.container.buffer[MAX_OBJECTS-1] := 0
+            return o
+
+    return -1                                   ' pointer not found in the tree
+
+
+pub obj_detach_nr(^window_s win, obj_nr): n
+' Detach an object by its index # in the object tree
+'   win:    window
+'   obj_nr: object index number
+    if ( win.container.buffer[obj_nr] )
+        n := obj_nr
+        if ( n < (MAX_OBJECTS-1) )
+            longmove(   @win.container.buffer[n], ...   ' pack pointers downwards
+                        @win.container.buffer[n+1], ...
+                        MAX_OBJECTS-1-n)
+        win.container.buffer[MAX_OBJECTS-1] := 0
 
 
 pub set_border_color(^window_s win, c)
-' Set a window's border color
-'   win:    window (pointer to window_s struct)
-'   c:      color
-    win.brd_color := c
+
+    win.border_color := c
 
 
-pub set_cursor(^window_s win, x, y)
-' Set a window's current object cursor position
-'   win:    window (pointer to window_s struct)
-'   x, y:   cursor position
-    win.cursor.x := x
-    win.cursor.y := y
+pub set_fill_color(^window_s win, c)
+
+    win.fill_color := c
 
 
-pub set_cursor_x(^window_s win, x)
-'' Set a window's current object cursor position (X-axis only)
-'   win:    window (pointer to window_s struct)
-'   x:      X cursor position
-    win.cursor.x := x
+pub set_flags(^window_s win, f)
+
+    win.flags := f
 
 
-pub set_cursor_y(^window_s win, y)
-' Set a window's current object cursor position (Y-axis only)
-'   win:    window (pointer to window_s struct)
-'   y:      Y cursor position
-    win.cursor.y := y
+pub set_grid(^window_s win, gx, gy): s
+
+    if ( win.widget.type == WIDGET_TYPE )
+        win.grid_x := gx
+        win.grid_y := gy
 
 
-pub set_default_border_color(c)
-' Set default border color for windows to be used when creaated
-'   c:  color
-    _def_border_color := c
+pub set_posxy(^window_s win, x, y)
 
-
-pub set_default_bgcolor(c)
-' Set default background color for windows to be used when created
-'   c:  color
-    _def_bgcolor := c
-
-
-pub set_default_fgcolor(c)
-' Set default foreground color for windows to be used when created
-'   c:  color
-    _def_fgcolor := c
-
-
-pub set_grid_spacing(^window_s win, spx, spy)
-' Set a window's inter-object grid spacing
-'   win:    window (pointer to window_s struct)
-'   spx:    x-axis spacing
-'   spy:    y-axis spacing
-    win.grid_spacing_x := spx
-    win.grid_spacing_y := spy
-
-
-dat
-{
-Copyright (c) 2026 Jesse Burt
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-associated documentation files (the "Software"), to deal in the Software without restriction,
-including without limitation the rights to use, copy, modify, merge, publish, distribute,
-sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or
-substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
-NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
-OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-}
+    win.container.cursor.x := x
+    win.container.cursor.y := y
 

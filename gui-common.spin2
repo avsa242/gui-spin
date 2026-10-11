@@ -1,0 +1,28 @@
+con
+
+    ' display driver API requirements
+    %interface dispdrv_i(
+        pub box(x1, y1, x2, y2, c, f)
+        pub bgcolor(c)
+        pub fgcolor(c)
+        pub hline(y, xs, len, c)
+        pub line(x1, y1, x2, y2, c)
+        pub newline()
+        pub plot(x, y, c)
+        pub pos_xy(x, y)
+        pub puts(p_str)
+        pub set_context_area(sx, sy, ex, ey)
+        pub show_context()
+        pub str_width(p_str): w
+        pub vline(x, ys, len, c)
+    )
+
+    ' terminal driver API requirements
+    %interface termdrv_i(
+        pub clear_line()
+        pub newline()
+        pub pos_x(x)
+        pub pos_xy(x, y)
+        pub puts(p_str)
+    )
+

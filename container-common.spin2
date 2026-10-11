@@ -1,0 +1,23 @@
+' container-type widgets: common code
+'xxx move grid x,y here
+con
+
+    struct cursor_s(...
+        word x, y)
+
+    struct container_s(...
+        long buffer[MAX_OBJECTS], ...
+        cursor_s cursor, ...
+        byte count)
+
+
+pub obj_cnt(^container_s cont): c
+
+    return cont.count
+
+
+pub obj_ptr(^container_s cont, obj_nr): p
+
+    return cont.buffer[obj_nr]
+
+
