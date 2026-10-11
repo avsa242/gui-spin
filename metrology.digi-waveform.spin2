@@ -38,12 +38,11 @@ var
 pub create(^window_s pwin): ^digi_plot_s i | ^widget_s wp
 ' Create a digital waveform plot object (use currently set defaults)
 '   pwin:   parent window (pointer to window_s struct)
-'   x, y:   plot upper-left position (pixels)
-'   w, h:   plot dimensions (pixels)
 '   Returns:
 '           plot handle on success (pointer)
-'           0 on failure (exceeded parent window's maximum number of obects,
+'           0 on failure (exceeded parent window's maximum number of objects,
 '                           or this object's maximum number of plots)
+
     if ( (pwin.nr_obj < MAX_WIN_OBJS ) and (_nr_digi_plots < MAX_DIGI_PLOTS) )
         [i] := @digi_plot[_nr_digi_plots]
         [wp] := @digi_plot[_nr_digi_plots].widget
@@ -122,10 +121,7 @@ pub destroy(^digi_plot_s plot): s
 
 pub draw(^digi_plot_s plot) | ^window_s win, le, te, re, be, cx, y, py, s, dur_s, ls, ^dispdrv_i disp, ^slicer.capture_s cap
 ' Draw a digital waveform plot to a window
-'   win:    pointer to window to draw to
-'   cfg:    pointer to threshold plot config
-'   sample: pointer to sample array
-'   slen:   sample array length
+'   plot:   pointer to threshold plot config
 '   NOTE: The window being drawn to MUST have a display driver defined first
 '   NOTE: The position drawn will be relative to the window the plot is drawn to.
     [win] := plot.widget.parent                 ' get handle on parent window
@@ -133,8 +129,8 @@ pub draw(^digi_plot_s plot) | ^window_s win, le, te, re, be, cx, y, py, s, dur_s
     [cap] := plot.p_plot
 
     ' get base coordinates from the window we're drawing to
-    te := win.widget.y + plot.widget.y+1        ' pre-calc top edge
-    le := win.widget.x + plot.widget.x+1        ' pre-calc left edge
+    te := win.widget.y + plot.widget.y        ' pre-calc top edge
+    le := win.widget.x + plot.widget.x        ' pre-calc left edge
     re := le + plot.widget.w-1                  ' pre-calc right edge
     be := te + plot.widget.h-1                  ' pre-calc bottom edge
 
@@ -249,6 +245,11 @@ pub set_default_dims(w, h)
 ' Set default dimensions for new digital waveform plots
     defaults.widget.w := w
     defaults.widget.h := h
+
+
+pub set_default_x_zoom(z)
+
+    defaults.x_zoom := z
 
 
 pub set_plot_color(^digi_plot_s plot, c)

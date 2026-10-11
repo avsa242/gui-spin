@@ -50,6 +50,7 @@ pub create(^window_s pwin, p_txt=0): ^button_s i | ^widget_s wp
         set_parent_obj(@wp,      @pwin)
         set_text(@i,             p_txt)
 
+        DEBUG("window cursor is ", udec_(pwin.cursor.x), udec_(pwin.cursor.y) )
         ' check if the button will fit at the current window cursor
         if ( ((pwin.cursor.x + wp.w) < (pwin.widget.x+pwin.widget.w-1)) and ...
              ((pwin.cursor.y + wp.h) < (pwin.widget.y+pwin.widget.h-1)) )
