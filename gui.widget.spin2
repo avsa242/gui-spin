@@ -1,3 +1,14 @@
+{
+----------------------------------------------------------------------------------------------------
+    Filename:       gui.widget.spin2
+    Description:    GUI widget (common to all GUI elements)
+    Author:         Jesse Burt
+    Started:        Oct 11, 2026
+    Updated:        Oct 12, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
+}
+
 {Spin2_v45}
 
 
@@ -9,6 +20,7 @@ con
         long p_disp, ...                        ' display driver pointer
         long parent, ...                        ' reference to parent widget/object
         long draw, ...                          ' draw function pointer
+        long flags, ...                         ' draw flags/options
         word abs_x, abs_y, ...                  ' screen coordinates    xxx review: needed?
         word x, y, w, h)                        ' position, dimensions
 
@@ -21,27 +33,57 @@ con
 #include "gui-common.spin2"
 
 
-pub set_widget_x(^widget_s obj_w, x)
+pub obj_type(^widget_s obj_w): t
+' Get a widget's type
+'   obj_w:      pointer to widget struct
+'   Returns:    widget type
+    return obj_w.type
 
+
+pub set_flags(^widget_s obj_w, f)
+' Set a widget's flags/options
+'   obj_w:  pointer to widget struct
+'   f:      one or more flags to set
+    obj_w.flags := f
+
+
+pub set_widget_x(^widget_s obj_w, x)
+' Set a widget's x-axis position
     obj_w.x := x
 
 
 pub set_widget_y(^widget_s obj_w, y)
-
+' Set a widget's y-axis position
     obj_w.y := y
 
 
 pub widget_area(^widget_s obj_w): sx, sy, ex, ey
-
+' Get the area occupied by a widget
+'   obj_w:      pointer to widget struct
+'   Returns:    starting and ending coordinates (4 longs)
     sx := obj_w.x
     sy := obj_w.y
     ex := sx+obj_w.w-1
     ey := sy+obj_w.h-1
 
 
-pub obj_type(^widget_s obj_w): t
+dat
+{
+Copyright 2026 Jesse Burt
 
-    return obj_w.type
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+}
 
