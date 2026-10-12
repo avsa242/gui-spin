@@ -1,0 +1,108 @@
+{
+----------------------------------------------------------------------------------------------------
+    Filename:       gui.pointer.spin2
+    Description:    GUI pointer/touchscreen ID management
+    Author:         Jesse Burt
+    Started:        Oct 12, 2026
+    Updated:        Oct 12, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
+}
+
+{Spin2_v45}
+
+con
+
+    MAX_TOUCH_TAGS  = 255
+
+    %interface pointer_i(
+        pub abs_x(p): x
+        pub abs_y(p): y
+        pub rel_x(p): x
+        pub rel_y(p): y
+        pub tag_area(id, sx, sy, ex, ey)
+        pub clear_tag_area(t)
+    )
+
+
+obj
+
+    widget: "gui.widget"
+
+
+con
+
+    struct widget_s = widget.widget_s
+
+
+var
+
+    long pdrv
+
+    long _tag_ptr[MAX_TOUCH_TAGS]
+
+    byte _next_tag_id
+
+
+pub clear_tag_id(id): s | ^pointer_i pointer
+' Clear a previously tracked touchscreen tag
+'   id: touch ID
+'   Returns:    touch ID cleared on success
+'               -1 on failure (unknown or invalid touch ID)
+    if ( (id >= 1) and (id < MAX_TOUCH_TAGS) )
+        if ( _tag_ptr[id] )
+            [pointer] := pdrv
+            pointer.clear_tag_area(id)
+            _next_tag_id--
+            return id
+
+    return -1
+
+
+pub set_pointer_driver(^pointer_i p)
+' Set pointer to the pointing device/touchscreen driver object
+'   p:  pointer to pointing device driver object
+    pdrv := [p]
+    _next_tag_id := 1                           ' init first tag ID
+
+
+pub tag_object(^widget_s p_obj): id | ^pointer_i pointer
+' Assign a touchscreen tag to an object, and optionally set a callback function
+'   p_obj:      pointer to object's widget structure
+'   id:         tag ID (optional; default is to use the next available one)
+'   Returns:    assigned tag ID 
+    if ( _next_tag_id < MAX_TOUCH_TAGS )
+        id := _next_tag_id
+    else
+        return -1   
+
+    [pointer] := pdrv
+
+    _tag_ptr[id] := @p_obj
+    pointer.tag_area(id, widget.widget_area(@p_obj) )
+    widget.set_touch_id(@p_obj, id)
+    _next_tag_id++
+    
+    return id   
+
+
+dat
+{
+Copyright (c) 2026 Jesse Burt
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+}
+
