@@ -47,8 +47,7 @@ con
         widget_s widget, ...
         long bgcolor, ...
         long fgcolor, ...
-        long p_text, ...
-        long flags)
+        long p_text)
 
 
 var
@@ -111,7 +110,7 @@ pub draw(p_txt=0) | ^text_label_s txt, ^dispdrv_i disp
 
     [disp] := txt.widget.p_disp
 
-    if ( txt.flags & FLAG_INVERT_COLORS )
+    if ( txt.widget.flags & FLAG_INVERT_COLORS )
         disp.bgcolor(txt.fgcolor)
         disp.fgcolor(txt.bgcolor)
     else
@@ -134,13 +133,6 @@ pub set_fgcolor(^text_label_s txt, fgc)
 '   txt:    pointer to text label struct
 '   fgc:    foreground/text color
     txt.fgcolor := fgc
-
-
-pub set_flags(^text_label_s txt, f)
-' Set a text label's flags/options
-'   txt:    pointer to text label struct
-'   f:      one or more flags to set
-    txt.flags := f
 
 
 dat

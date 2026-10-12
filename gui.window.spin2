@@ -48,7 +48,6 @@ con
     struct window_s(...
         widget_s widget, ...
         container_s container, ...
-        long flags, ...
         long border_color, ...
         long fill_color, ...
         word grid_x, ...
@@ -100,7 +99,7 @@ pub create(^dispdrv_i dobj, x, y, w=0, h=0, gx=0, gy=0): ^window_s win
         longfill(@win.container.buffer, 0, MAX_OBJECTS)
         win.container.count := 0
 
-        win.flags := DEF_FLAGS
+        win.widget.flags := DEF_FLAGS
 
         _nr_win++
         DEBUG("[win] create: x=", udec_(win.widget.x), " y=", udec_(win.widget.y), " abs_x=", udec_(win.widget.abs_x), " abs_y=", udec_(win.widget.abs_y) )
@@ -136,13 +135,13 @@ pub draw(p_win=0) | ^window_s win, ^dispdrv_i disp, x, y
     x := win.widget.abs_x
     y := win.widget.abs_y
 
-    if ( win.flags & FLAG_DRAW_OUTLINE )        ' show the window outline
+    if ( win.widget.flags & FLAG_DRAW_OUTLINE ) ' show the window outline
         disp.box(   x, y, ...
                     x+win.widget.w-1, y+win.widget.h-1, ...
                     win.border_color, ...
                     false)
 
-    if ( win.flags & FLAG_DRAW_FILL )           ' show fill area inside the outline
+    if ( win.widget.flags & FLAG_DRAW_FILL )    ' show fill area inside the outline
         disp.box(   x+1, y+1, ...
                     x+win.widget.w-2, y+win.widget.h-2, ...
                     win.fill_color, ...
@@ -245,13 +244,6 @@ pub set_fill_color(^window_s win, c)
 '   win:    pointer to window struct
 '   c:      fill color
     win.fill_color := c
-
-
-pub set_flags(^window_s win, f)
-' Set a window's flags/options
-'   win:    pointer to window struct
-'   f:      one or more flags to set
-    win.flags := f
 
 
 pub set_grid(^window_s win, gx, gy)

@@ -53,7 +53,6 @@ con
         container_s container, ...
         long border_color, ...
         long fill_color, ...
-        long flags, ...
         byte state)
 
 
@@ -98,7 +97,7 @@ pub create(^window_s win, w=0, h=0): ^button_s btn
         btn.container.cursor.y := 0
 
         btn.state := 1
-        btn.flags := DEF_FLAGS
+        btn.widget.flags := DEF_FLAGS
 
         longfill(@btn.container.buffer, 0, MAX_OBJECTS)
         btn.container.count := 0
@@ -128,15 +127,15 @@ pub draw(p_btn=0) | ^button_s btn, ^dispdrv_i disp, ^window_s pwin, sx, sy, ex, 
     ex := (btn.widget.x + btn.widget.w-1)
     ey := btn.widget.y + btn.widget.h-1
 
-    if ( btn.flags & FLAG_DRAW_OUTLINE )
-        if ( btn.flags & FLAG_DRAW_CORNERS )
+    if ( btn.widget.flags & FLAG_DRAW_OUTLINE )
+        if ( btn.widget.flags & FLAG_DRAW_CORNERS )
             disp.box(sx, sy, ex, ey, btn.border_color, false)
         else
             disp.hline(sy, sx+1, ex-sx-1, btn.border_color)
             disp.hline(ey, sx+1, ex-sx-1, btn.border_color)
             disp.vline(sx, sy+1, ey-sy-1, btn.border_color)
             disp.vline(ex, sy+1, ey-sy-1, btn.border_color)
-    if ( btn.flags & FLAG_DRAW_FILL )
+    if ( btn.widget.flags & FLAG_DRAW_FILL )
         disp.box(sx+1, sy+1, ex-1, ey-1, btn.fill_color, true)
 
 
@@ -187,13 +186,6 @@ pub set_fill_color(^button_s btn, c)
 '   btn:    pointer to button struct
 '   c:      color
     btn.fill_color := c
-
-
-pub set_flags(^button_s btn, f)
-' Set a button's flags/options
-'   btn:    pointer to button struct
-'   f:      one or more flags to set
-    btn.flags := f
 
 
 dat
