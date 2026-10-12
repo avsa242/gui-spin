@@ -21,8 +21,10 @@ con
         long parent, ...                        ' reference to parent widget/object
         long draw, ...                          ' draw function pointer
         long flags, ...                         ' draw flags/options
+        long event, ...                         ' events
         word abs_x, abs_y, ...                  ' screen coordinates    xxx review: needed?
-        word x, y, w, h)                        ' position, dimensions
+        word x, y, w, h, ...                    ' position, dimensions
+        byte touch_id)
 
     ' widget types
     TYPE_WINDOW     = 1
@@ -47,6 +49,11 @@ pub set_flags(^widget_s obj_w, f)
     obj_w.flags := f
 
 
+pub set_touch_id(^widget_s obj_w, tid)
+' Set a widget's touchscreen ID
+    obj_w.touch_id := tid
+
+
 pub set_widget_x(^widget_s obj_w, x)
 ' Set a widget's x-axis position
     obj_w.x := x
@@ -61,10 +68,10 @@ pub widget_area(^widget_s obj_w): sx, sy, ex, ey
 ' Get the area occupied by a widget
 '   obj_w:      pointer to widget struct
 '   Returns:    starting and ending coordinates (4 longs)
-    sx := obj_w.x
-    sy := obj_w.y
-    ex := sx+obj_w.w-1
-    ey := sy+obj_w.h-1
+    sx := obj_w.abs_x
+    sy := obj_w.abs_y
+    ex := obj_w.w-1
+    ey := obj_w.h-1
 
 
 dat
