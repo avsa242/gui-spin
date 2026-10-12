@@ -1,4 +1,15 @@
+{
+----------------------------------------------------------------------------------------------------
+    Filename:       gui.text.spin2
+    Description:    GUI element: text labels
+    Author:         Jesse Burt
+    Started:        Sep 5, 2026
+    Updated:        Oct 12, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
+}
 {Spin2_v45}
+
 
 con
 
@@ -36,7 +47,8 @@ con
         widget_s widget, ...
         long bgcolor, ...
         long fgcolor, ...
-        long p_text)
+        long p_text, ...
+        long flags)
 
 
 var
@@ -48,10 +60,11 @@ var
  
 pub create(p_parent, p_txt, w=0, h=0): ^text_label_s txt | ct, sx, sy
 ' Create a text label
-'   p_parent:   parent container handle
+'   p_parent:   parent container (pointer to button_s or window_s struct)
 '   p_txt:      text string
 '   w, h:       dimensions of label (optional)
-'   Returns:    handle of text label
+'   Returns:    pointer to text label struct on success
+'               0 on failure (text label array full)
     if ( _nr_text_labels < MAX_TEXT_LABELS )
         if ( w < 1 )
             w := DEF_WIDTH
@@ -83,10 +96,14 @@ pub create(p_parent, p_txt, w=0, h=0): ^text_label_s txt | ct, sx, sy
 
         return
 
+    DEBUG("[textlabel] create: error; out of memory")
+    return 0
+
 
 pub draw(p_txt=0) | ^text_label_s txt, ^dispdrv_i disp
-
-    ifnot ( p_txt )                             ' get the label's handle from the caller,
+' Draw a text label
+'   p_txt:  pointer to text label struct (optional if called indirectly via the struct itself)
+    ifnot ( p_txt )                             ' get the label's pointer from the parent struct,
         [txt] := %self                          '   if none was specified
     else
         [txt] := p_txt
@@ -94,19 +111,55 @@ pub draw(p_txt=0) | ^text_label_s txt, ^dispdrv_i disp
 
     [disp] := txt.widget.p_disp
 
-    disp.bgcolor(txt.bgcolor)
-    disp.fgcolor(txt.fgcolor)
+    if ( txt.flags & FLAG_INVERT_COLORS )
+        disp.bgcolor(txt.fgcolor)
+        disp.fgcolor(txt.bgcolor)
+    else
+        disp.bgcolor(txt.bgcolor)
+        disp.fgcolor(txt.fgcolor)
+
     disp.pos_xy(txt.widget.x, txt.widget.y)
     disp.puts(txt.p_text)
 
 
 pub set_bgcolor(^text_label_s txt, bgc)
-
+' Set a text label's background color
+'   txt:    pointer to text label struct
+'   bgc:    background color
     txt.bgcolor := bgc
 
 
 pub set_fgcolor(^text_label_s txt, fgc)
-
+' Set a text label's foreground color
+'   txt:    pointer to text label struct
+'   fgc:    foreground/text color
     txt.fgcolor := fgc
 
+
+pub set_flags(^text_label_s txt, f)
+' Set a text label's flags/options
+'   txt:    pointer to text label struct
+'   f:      one or more flags to set
+    txt.flags := f
+
+
+dat
+{
+Copyright 2026 Jesse Burt
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+}
 

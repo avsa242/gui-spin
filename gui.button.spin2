@@ -1,3 +1,13 @@
+{
+----------------------------------------------------------------------------------------------------
+    Filename:       gui.button.spin2
+    Description:    GUI element: buttons
+    Author:         Jesse Burt
+    Started:        Aug 22, 2026
+    Updated:        Oct 12, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
+}
 {Spin2_v45}
 
 
@@ -20,6 +30,7 @@ con
     DEF_FILL_COLOR      = 0
     DEF_FLAGS           = FLAG_DRAW_OUTLINE | FLAG_DRAW_FILL
 
+
 #include "gui-common.spin2"
 #include "container-common.spin2"
 
@@ -38,13 +49,11 @@ con
 
     struct button_s(...
         widget_s widget, ...
+        container_s container, ...
         long border_color, ...
         long fill_color, ...
         long flags, ...
-        container_s container, ...
-        byte count, ...
         byte state)
-
 
 
 var
@@ -53,8 +62,19 @@ var
     byte        _nr_buttons
 
 
-pub create(^window_s win, w=0, h=0): ^button_s btn
+pub border_color(^button_s btn): c
+' Get a button's current border color
+'   btn:        pointer to button_s struct
+'   Returns:    border color
+    return btn.border_color
 
+
+pub create(^window_s win, w=0, h=0): ^button_s btn
+' Create a button
+'   win:        parent window (pointer to window_s struct)
+'   w, h:       dimensions of button (optional; sets DEF_WIDTH and DEF_HEIGHT if not specified)
+'   Returns:    pointer to button struct on success
+'               0 on failure (button array full)
     if ( _nr_buttons < MAX_BUTTONS )
         if ( w < 1 )
             w := DEF_WIDTH
@@ -62,7 +82,7 @@ pub create(^window_s win, w=0, h=0): ^button_s btn
             h := DEF_HEIGHT
 
         [btn] := @button[_nr_buttons]
-        btn.widget.x := win.container.cursor.x
+        btn.widget.x := win.container.cursor.x  ' position at parent window's current cursor
         btn.widget.y := win.container.cursor.y
         btn.widget.w := w
         btn.widget.h := h
@@ -70,7 +90,7 @@ pub create(^window_s win, w=0, h=0): ^button_s btn
         btn.widget.abs_y := win.widget.abs_y+btn.widget.y
         btn.widget.type := wgui.TYPE_BUTTON
         btn.widget.p_disp := win.widget.p_disp
-        btn.widget.parent := [win]  ' save a reference to the parent window
+        btn.widget.parent := [win]              ' save a reference to the parent window
         btn.widget.draw := @draw
 
         btn.container.cursor.x := 0
@@ -80,7 +100,7 @@ pub create(^window_s win, w=0, h=0): ^button_s btn
         btn.flags := DEF_FLAGS
 
         longfill(@btn.container.buffer, 0, MAX_OBJECTS)
-        btn.count := 0
+        btn.container.count := 0
 
         _nr_buttons++
         DEBUG("[button] create: x=", udec_(btn.widget.x), " y=", udec_(btn.widget.y), " w=", udec_(btn.widget.w), " h=", udec_(btn.widget.h) )
@@ -92,8 +112,9 @@ pub create(^window_s win, w=0, h=0): ^button_s btn
 
 
 pub draw(p_btn=0) | ^button_s btn, ^dispdrv_i disp, ^window_s pwin, sx, sy, ex, ey
-
-    ifnot ( p_btn )                             ' get the button's handle from the caller,
+' Draw a button
+'   p_btn:  pointer to button struct (optional if called indirectly via the struct itself)
+    ifnot ( p_btn )                             ' get the button's pointer from the parent struct,
         [btn] := %self                          '   if none was specified
     else
         [btn] := p_btn
@@ -112,10 +133,19 @@ pub draw(p_btn=0) | ^button_s btn, ^dispdrv_i disp, ^window_s pwin, sx, sy, ex, 
         disp.box(sx+1, sy+1, ex-1, ey-1, btn.fill_color, true)
 
 
+pub fill_color(^button_s btn): c
+' Get a button's current fill color
+'   btn:        pointer to button_s struct
+'   Returns:    fill color
+    return btn.fill_color
+
+
 pub obj_attach(^button_s btn, p_obj): n | ^widget_s wp, ex, ey                                          
-' Attach a GUI object to a window's tree
-'   win:    window
-'   p_obj:  pointer to object structure
+' Attach a GUI object to a button's tree
+'   btn:        pointer to button struct to attach object to
+'   p_obj:      pointer to object struct
+'   Returns:    index in object tree array on success
+'               -1 on failure (object array is full)
     n := btn.container.count
     if ( n < MAX_OBJECTS )
         [wp] := p_obj
@@ -129,7 +159,7 @@ pub obj_attach(^button_s btn, p_obj): n | ^widget_s wp, ex, ey
             if ( btn.container.cursor.y > (btn.widget.y+btn.widget.h-1) )
                 btn.container.cursor.y := 0
 
-        btn.container.buffer[n] := p_obj                ' add the object's pointer
+        btn.container.buffer[n] := p_obj        ' add the object's pointer
 
         btn.container.count++
 
@@ -139,11 +169,36 @@ pub obj_attach(^button_s btn, p_obj): n | ^widget_s wp, ex, ey
 
 
 pub set_border_color(^button_s btn, c)
-
+' Set a button's border/outline color
+'   btn:    pointer to button struct
+'   c:      color
     btn.border_color := c
 
 
 pub set_fill_color(^button_s btn, c)
-
+' Set a button's interior fill color
+'   btn:    pointer to button struct
+'   c:      color
     btn.fill_color := c
+
+
+dat
+{
+Copyright 2026 Jesse Burt
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+}
 

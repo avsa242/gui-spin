@@ -1,3 +1,13 @@
+{
+----------------------------------------------------------------------------------------------------
+    Filename:       gui.window.spin2
+    Description:    GUI element: windows
+    Author:         Jesse Burt
+    Started:        Sep 5, 2026
+    Updated:        Oct 12, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
+}
 {Spin2_v45}
 
 
@@ -21,7 +31,6 @@ con
     DEF_GRID_X          = 1
     DEF_GRID_Y          = 1
     DEF_FLAGS           = FLAG_DRAW_OUTLINE | FLAG_DRAW_FILL
-
 
 
 #include "gui-common.spin2"
@@ -52,20 +61,14 @@ var
     byte        _nr_win
 
 
-pub area(^window_s win): sx, sy, ex, ey
-' Get the area occupied by a window
-'   win:        handle of window
-'   Returns:    area (four longs)
-    return win.widget.x, win.widget.y, win.widget.x+win.widget.w-1, win.widget.y+win.widget.h-1
-
-
 pub create(^dispdrv_i dobj, x, y, w=0, h=0, gx=0, gy=0): ^window_s win
 ' Create a window
 '   dobj:       display driver object instance (pointer to object)
 '   x, y:       upper-left corner of window's position (pixels)
-'   w, h:       dimensions (pixels)
+'   w, h:       dimensions (optional; sets DEF_WIDTH and DEF_HEIGHT if not specified)
 '   gx, gy:     grid spacing of contained GUI objects (pixels)
-'   Returns:    window handle (pointer to window_s struct)
+'   Returns:    pointer to window struct on success
+'               0 on failure (window array full)
     if ( _nr_win < MAX_WINDOWS )
         if ( w < 1 )
             w := DEF_WIDTH
@@ -82,7 +85,7 @@ pub create(^dispdrv_i dobj, x, y, w=0, h=0, gx=0, gy=0): ^window_s win
         win.widget.abs_x := x
         win.widget.abs_y := y
 
-        window[_nr_win].widget.p_disp := [dobj]        ' point to display driver object
+        window[_nr_win].widget.p_disp := [dobj] ' point to display driver object
         win.grid_x := gx                        ' set the new window's grid spacing
         win.grid_y := gy
         ifnot ( win.grid_x )                    ' (default to 1 if not specified)
@@ -115,13 +118,15 @@ pub count(): t
 
 pub display_ptr(^window_s win): p
 ' Get a window's attached display driver object
+'   win:        pointer to window struct
+'   Returns:    pointer to display driver object
     return win.widget.p_disp
 
 
 pub draw(p_win=0) | ^window_s win, ^dispdrv_i disp, x, y
 ' Draw a window
-'   p_win:  window handle (optional; default is to read from parent struct)
-    ifnot ( p_win )                             ' get the pointer from the caller,
+'   p_win:  window handle (optional if called indirectly via the struct itself)
+    ifnot ( p_win )                             ' get the window's pointer from the parent struct,
         [win] := %self                          '   if none was specified
     else
         [win] := p_win
@@ -146,14 +151,16 @@ pub draw(p_win=0) | ^window_s win, ^dispdrv_i disp, x, y
 
 pub obj_attach(^window_s win, p_obj): n | ^widget_s wp, ex, ey
 ' Attach a GUI object to a window's tree
-'   win:    window
-'   p_obj:  pointer to object structure
+'   win:    pointer to window struct to attach object to
+'   p_obj:  pointer to object struct
+'   Returns:    index in object tree array on success
+'               -1 on failure (object array is full)
     n := win.container.count
     if ( n < MAX_OBJECTS )
         [wp] := p_obj
         DEBUG("[win] obj_attach: obj type ", udec_(wp.type), " w=", udec_(wp.w) )
         DEBUG("[win] obj_attach: cursor before ", udec_(win.container.cursor.x), udec_(win.container.cursor.y) )
-        win.container.buffer[n] := p_obj                ' add the object's pointer
+        win.container.buffer[n] := p_obj        ' add the object's pointer
         win.container.count++
 
         ' move the window cursor by the size of the obj, wrapping around to the left (or top)
@@ -175,7 +182,9 @@ pub obj_attach(^window_s win, p_obj): n | ^widget_s wp, ex, ey
 
 
 pub fit_cursor(^window_s win, w, h)
-
+' Attempt to reposition the cursor based on the given dimensions
+'   win:    pointer to window struct
+'   w, h:   dimensions of object
     if ( (win.container.cursor.x+w) > (win.widget.x+win.widget.w-1) )
         DEBUG("[win] fit_cursor: cursor.x=", udec_(win.container.cursor.x), "; wrapping")
         win.container.cursor.x := win.grid_x
@@ -187,9 +196,11 @@ pub fit_cursor(^window_s win, w, h)
 
 
 pub obj_detach(^window_s win, p_obj): o
-' Detach an object by its handle
-'   win:        window
-'   p_obj:    pointer to object
+' Detach an object from a window (by pointer to object)
+'   win:        pointer to window struct
+'   p_obj:      pointer to object struct to detach
+'   Returns:    array index of object within window on success
+'               -1 on failure (object with that pointer not found)
     repeat o from 0 to win.container.count-1    ' find the object's pointer in the tree
         if ( win.container.buffer[o] == p_obj ) ' matching pointer?
             if ( o < (MAX_OBJECTS-1) )          ' pack pointers downwards if we're not at the end
@@ -197,15 +208,18 @@ pub obj_detach(^window_s win, p_obj): o
                             @win.container.buffer[o+1], ...
                             MAX_OBJECTS-1-o)
             win.container.buffer[MAX_OBJECTS-1] := 0
+            win.container.count--
             return o
 
     return -1                                   ' pointer not found in the tree
 
 
 pub obj_detach_nr(^window_s win, obj_nr): n
-' Detach an object by its index # in the object tree
-'   win:    window
-'   obj_nr: object index number
+' Detach an object from a window (by array index #)
+'   win:        pointer to window struct
+'   obj_nr:     object array index number
+'   Returns:    array index of object within window on success
+'               -1 on failure (object with that pointer not found)
     if ( win.container.buffer[obj_nr] )
         n := obj_nr
         if ( n < (MAX_OBJECTS-1) )
@@ -213,32 +227,67 @@ pub obj_detach_nr(^window_s win, obj_nr): n
                         @win.container.buffer[n+1], ...
                         MAX_OBJECTS-1-n)
         win.container.buffer[MAX_OBJECTS-1] := 0
+        win.container.count--
+        return n
+
+    return -1
 
 
 pub set_border_color(^window_s win, c)
-
+' Set a window's border color
+'   win:    pointer to window struct
+'   c:      border color
     win.border_color := c
 
 
 pub set_fill_color(^window_s win, c)
-
+' Set a window's interior fill color
+'   win:    pointer to window struct
+'   c:      fill color
     win.fill_color := c
 
 
 pub set_flags(^window_s win, f)
-
+' Set a window's flags/options
+'   win:    pointer to window struct
+'   f:      one or more flags to set
     win.flags := f
 
 
-pub set_grid(^window_s win, gx, gy): s
-
+pub set_grid(^window_s win, gx, gy)
+' Set a window's interior cursor position grid spacing (used when automatically placing new objects)
+'   win:    pointer to window struct
+'   gx, gy: x-axis/horizontal, y-axis/vertical spacing (pixels)
     if ( win.widget.type == WIDGET_TYPE )
         win.grid_x := gx
         win.grid_y := gy
 
 
 pub set_posxy(^window_s win, x, y)
-
+' Set a window's interior cursor position
+'   win:    pointer to window struct
+'   x, y:   x-axis/horizontal, y-axis/vertical position (pixels)
     win.container.cursor.x := x
     win.container.cursor.y := y
+
+
+dat
+{
+Copyright 2026 Jesse Burt
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+}
 

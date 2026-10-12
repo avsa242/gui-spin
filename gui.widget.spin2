@@ -20,6 +20,7 @@ con
 
 #include "gui-common.spin2"
 
+
 pub set_widget_x(^widget_s obj_w, x)
 
     obj_w.x := x
