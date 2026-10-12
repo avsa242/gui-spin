@@ -21,6 +21,7 @@ con
     ' option flags
     FLAG_DRAW_OUTLINE   = 1 << 0
     FLAG_DRAW_FILL      = 1 << 1
+    FLAG_DRAW_CORNERS   = 1 << 2
 
 
     ' default settings
@@ -28,7 +29,7 @@ con
     DEF_HEIGHT          = 64
     DEF_BORDER_COLOR    = 1
     DEF_FILL_COLOR      = 0
-    DEF_FLAGS           = FLAG_DRAW_OUTLINE | FLAG_DRAW_FILL
+    DEF_FLAGS           = FLAG_DRAW_OUTLINE | FLAG_DRAW_FILL | FLAG_DRAW_CORNERS
 
 
 #include "gui-common.spin2"
@@ -128,7 +129,13 @@ pub draw(p_btn=0) | ^button_s btn, ^dispdrv_i disp, ^window_s pwin, sx, sy, ex, 
     ey := btn.widget.y + btn.widget.h-1
 
     if ( btn.flags & FLAG_DRAW_OUTLINE )
-        disp.box(sx, sy, ex, ey, btn.border_color, false)
+        if ( btn.flags & FLAG_DRAW_CORNERS )
+            disp.box(sx, sy, ex, ey, btn.border_color, false)
+        else
+            disp.hline(sy, sx+1, ex-sx-1, btn.border_color)
+            disp.hline(ey, sx+1, ex-sx-1, btn.border_color)
+            disp.vline(sx, sy+1, ey-sy-1, btn.border_color)
+            disp.vline(ex, sy+1, ey-sy-1, btn.border_color)
     if ( btn.flags & FLAG_DRAW_FILL )
         disp.box(sx+1, sy+1, ex-1, ey-1, btn.fill_color, true)
 
@@ -180,6 +187,13 @@ pub set_fill_color(^button_s btn, c)
 '   btn:    pointer to button struct
 '   c:      color
     btn.fill_color := c
+
+
+pub set_flags(^button_s btn, f)
+' Set a button's flags/options
+'   btn:    pointer to button struct
+'   f:      one or more flags to set
+    btn.flags := f
 
 
 dat
