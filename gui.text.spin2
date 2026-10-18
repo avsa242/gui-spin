@@ -145,6 +145,13 @@ pub set_font(^text_label_s txt, fidx)
     txt.font_idx := fidx
 
 
+pub set_dims_from_font(^text_label_s txt) | ^dispdrv_i disp
+' Set a text label's dimensions based on the set font
+    [disp] := txt.widget.p_disp
+    txt.widget.w := disp.str_width(txt.p_text, txt.font_idx)
+    txt.widget.h := disp.font_height(0, txt.font_idx)
+
+
 dat
 {
 Copyright 2026 Jesse Burt

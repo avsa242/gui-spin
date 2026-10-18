@@ -5,6 +5,8 @@ con
         pub box(x1, y1, x2, y2, c, f)
         pub bgcolor(c)
         pub fgcolor(c)
+        pub font_height(ch, fidx): h
+        pub font_width(ch, fidx): w
         pub hline(y, xs, len, c)
         pub line(x1, y1, x2, y2, c)
         pub newline()
@@ -14,7 +16,7 @@ con
         pub set_clip_rect(sx, sy, ex, ey)
         pub set_font(i)
         pub show_context()
-        pub str_width(p_str): w
+        pub str_width(p_str, fidx): w
         pub vline(x, ys, len, c)
     )
 
