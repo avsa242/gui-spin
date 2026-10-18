@@ -4,7 +4,7 @@
     Description:    GUI widget (common to all GUI elements)
     Author:         Jesse Burt
     Started:        Oct 11, 2026
-    Updated:        Oct 12, 2026
+    Updated:        Oct 18, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -30,6 +30,7 @@ con
     TYPE_WINDOW     = 1
     TYPE_BUTTON     = 2
     TYPE_TEXTLABEL  = 3
+    TYPE_PROGRESSBAR= 4
 
 
 #include "gui-common.spin2"

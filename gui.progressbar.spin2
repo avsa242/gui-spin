@@ -4,7 +4,7 @@
     Description:    Progress bar GUI widget
     Author:         Jesse Burt
     Started:        Sep 5, 2026
-    Updated:        Sep 13, 2026
+    Updated:        Oct 18, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 
@@ -14,15 +14,49 @@
             pub line(sx, sy, ex, ey, color)
         a window to draw the progress bar to (window_s type from gui.window.spin2)
 }
-
-#include "gui.common.spin2"
-
+{Spin2_v45}
 
 con
+
+    WIDGET_TYPE         = wgui.TYPE_PROGRESSBAR
 
     ' limits
     MAX_PROGRESS_BARS   = 1
 
+    ' option flags
+    FLAG_DRAW_OUTLINE   = 1 << 0
+    FLAG_DRAW_CORNERS   = 1 << 2
+
+    ' defaults settings
+    DEF_WIDTH           = 128
+    DEF_HEIGHT          = 64
+    DEF_BORDER_COLOR    = 1
+    DEF_FILL_COLOR      = 0
+    DEF_FLAGS           = 0
+
+
+#include "gui-common.spin2"
+
+
+obj
+
+    wgui:   "gui.widget"
+    window: "gui.window"
+    button: "gui.button"
+
+
+con
+
+    struct widget_s = wgui.widget_s
+    struct window_s = window.window_s
+    struct button_s = button.button_s
+
+    struct progressbar_s(...
+        widget_s    widget, ...
+        long        border_color, ...
+        long        bar_color, ...
+        long        bgcolor, ...
+        word        value)
 
 var
 
@@ -32,167 +66,106 @@ var
     byte            _nr_progbars
 
 
-pub create(^window_s pwin): ^progressbar_s i | ^widget_s wp
+pub create(p_parent, w=0, h=0): ^progressbar_s p | ct, sx, sy, ^widget_s wp
 ' Create a progress bar object (use currently set defaults)
 '   pwin:   parent window (pointer to window_s struct)
 '   Returns:
 '           progress bar handle on success (pointer)
 '           0 on failure (exceeded parent window's maximum number of obects,
 '                           or this object's maximum number of buttons)
-    if ( (pwin.nr_obj < MAX_WIN_OBJS) and (_nr_progbars < MAX_PROGRESS_BARS) )
-        [i] := @prog_bar[_nr_progbars]          ' cache local pointers to progressbar object struct
-        [wp] := @prog_bar[_nr_progbars].widget  '   and widget sub-struct
+    if ( _nr_progbars < MAX_PROGRESS_BARS )
+        if ( w < 1 )
+            w := DEF_WIDTH
+        if ( h < 1 )
+            h := DEF_HEIGHT
+        [p] := @prog_bar[_nr_progbars]
 
-        ' set up widget basic configuration
-        bytemove(@i, @defaults, sizeof(progressbar_s) )
-        set_type(@wp,       OBJ_PROGRESS_BAR)
-        set_parent_obj(@wp, @pwin)
+        ct := long[p_parent][0]                 ' read container type
+        if ( ct == wgui.TYPE_WINDOW )           ' get coords from parent container
+            p.widget.p_disp := window_s[p_parent].widget.p_disp
+            sx := window_s[p_parent].container.cursor.x
+            sy := window_s[p_parent].container.cursor.y
+        elseif ( ct == wgui.TYPE_BUTTON )
+            p.widget.p_disp := button_s[p_parent].widget.p_disp
+            sx := button_s[p_parent].container.cursor.x
+            sy := button_s[p_parent].container.cursor.y
 
-        ' check if the label will fit at the current window cursor
-        if ( ((pwin.cursor.x + wp.w) < (pwin.widget.x+pwin.widget.w-1)) and ...
-             ((pwin.cursor.y + wp.h) < (pwin.widget.y+pwin.widget.h-1)) )
-            set_posxy(@wp,  pwin.cursor.x, pwin.cursor.y)
+        p.widget.type := wgui.TYPE_PROGRESSBAR
+        p.widget.x := sx
+        p.widget.y := sy
+        p.widget.w := w
+        p.widget.h := h
+        p.widget.parent := p_parent
+        p.widget.draw := @draw
 
-            ' move the window's cursor for the next object
-            pwin.cursor.x += wp.w+pwin.grid_spacing_x
-            if ( pwin.cursor.x > (pwin.widget.x+pwin.widget.w-1) )
-                pwin.cursor.x := (pwin.widget.x+pwin.grid_spacing_x)
-                pwin.cursor.y += wp.h+pwin.grid_spacing_y
-            if ( pwin.cursor.y > (pwin.widget.y+pwin.widget.h-1) )
-                pwin.cursor.y := pwin.widget.y
-
-        pwin.object[pwin.nr_obj] := @i
-        pwin.nr_obj++
         _nr_progbars++
+
         return
 
     return 0
 
 
-pub create_explicit(^window_s pwin, x, y, w, h): i | wp
-' Create a progress bar object
-'   pwin:   parent window (pointer to window_s struct)
-'   x, y:   button upper-left position (pixels)
-'   w, h:   progress bar dimensions (pixels; optional - defaults will be used if unspecified)
-'   Returns:
-'           progress bar handle on success (pointer)
-'           0 on failure (exceeded parent window's maximum number of obects,
-'                           or this object's maximum number of buttons)                                 
-    if ( (pwin.nr_obj < MAX_WIN_OBJS) and (_nr_progbars < MAX_PROGRESS_BARS) )
-        i := @prog_bar[_nr_progbars]
-        wp := @prog_bar[_nr_progbars].widget    ' widget struct pointer
-
-        ' set up widget basic configuration
-        set_type(wp,        OBJ_PROGRESS_BAR)
-        set_parent_obj(wp,  @pwin)
-        set_posxy(wp,       x, y)
-        set_dims(wp,        w, h)
-        set_bgcolor(wp,     pwin.widget.bgcolor)' inherit widget colors from parent
-        set_fgcolor(wp,     pwin.widget.fgcolor)
-        set_outline_color(i,pwin.widget.bgcolor)
-        pwin.object[pwin.nr_obj] := i
-        pwin.nr_obj++
-        _nr_progbars++
-        return
-
-    return 0
-
-
-pub destroy(^progressbar_s pbar): s
-' Destroy a progress bar object
-'   plot:       progress bar (pointer to progressbar_s struct)
-'   Returns:    number of progress bars before destruction
-    if ( (_nr_progbars > 0) and (pbar.widget.type == OBJ_PROGRESS_BAR) )
-    ' do some basic safeguards before just clearing memory
-        pbar~
-        s := _nr_progbars
-        _nr_progbars--
-        return
-
-    return false
-
-
-pub draw(^progressbar_s pbar) | ^window_s win, ^dispdrv_i disp, sx, sy, ex, ey, p, l, s, c
+pub draw(p_pbar=0) | ^progressbar_s pbar, ^window_s win, ^dispdrv_i disp, sx, sy, ex, ey, p, l, s, c
 ' Draw a progress bar
 '   pbar:   progress bar data (pointer to progressbar_s struct)
+    ifnot ( p_pbar )                             ' get the button's pointer from the parent struct,
+        [pbar] := %self                          '   if none was specified
+    else
+        [pbar] := p_pbar
+
+    [disp] := pbar.widget.p_disp                ' get the display driver interface from the parent
     [win] := pbar.widget.parent                 ' get handle on parent window
-    [disp] := win.p_disp                        ' get the display driver interface from the parent
 
     sx := win.widget.x+pbar.widget.x+1
     sy := win.widget.y+pbar.widget.y+1
     ex := sx + pbar.widget.w-1
     ey := sy + pbar.widget.h-1
-    p := (0 #> pbar.state <# 100)
+    p := (0 #> pbar.value <# 100)
     l := (ex-sx)-2                              ' fill length (account for bar outline too)
 
     ' draw the outline
-    if ( pbar.opts & OPT_DRAW_OUTLINE )
-        disp.box(sx, sy, ex, ey, pbar.outline_color, false)
+    if ( pbar.widget.flags & FLAG_DRAW_OUTLINE )
+        if ( pbar.widget.flags & FLAG_DRAW_CORNERS )
+            disp.box(sx, sy, ex, ey, pbar.border_color, false)
+        else
+            disp.hline(sy, sx+1, ex-sx-1, pbar.border_color)
+            disp.hline(ey, sx+1, ex-sx-1, pbar.border_color)
+            disp.vline(sx, sy+1, ey-sy-1, pbar.border_color)
+            disp.vline(ex, sy+1, ey-sy-1, pbar.border_color)
 
     ' draw the progress bar itself
     if ( p )                                    ' only draw if percent > 0
         s := (p * l) / 100                      ' scaled bar/filled length
-        disp.box(sx+1, sy+1, sx+1+s, ey-1, pbar.widget.fgcolor, true)
-        disp.box(sx+1+s, sy+1, ex-1, ey-1, pbar.widget.bgcolor, true)
+        disp.box(sx+1, sy+1, sx+1+s, ey-1, pbar.bar_color, true)
+        disp.box(sx+1+s, sy+1, ex-1, ey-1, pbar.bgcolor, true)
 
 
-pub ptr_widget(^progressbar_s pbar): ^widget_s ow
-' Get pointer to a progress bar's widget configuration
-'   pbar:       progress bar (pointer to progressbar_s struct)
-'   Returns:    pointer to widget_s struct
-    return @pbar.widget
-
-
-pub set_bar_color = set_fgcolor
-' Set battery state of charge bar color
-
-
-pub set_default_bgcolor(c)
-' Set default background color for new progressbars
-'   c:  color
-    defaults.widget.bgcolor := c
-
-
-pub set_default_fgcolor(c)
-' Set default foreground color for new progressbars
-'   c:  color
-    defaults.widget.fgcolor := c
-
-
-pub set_default_dims(w, h)
-' Set default dimensions for new progressbars
-    defaults.widget.w := w
-    defaults.widget.h := h
-
-
-pub set_default_opts(o)
-' Set default options for new progressbars
-    defaults.opts := o
-
-
-pub set_default_outline_color(c)
-' Set default outline color for new progressbars
-    defaults.outline_color := c
-
-
-pub set_opts(^progressbar_s pbar, o)
-' Set progressbar options
+pub set_border_color(^progressbar_s pbar, c)
+' Set progressbar border/outline color
 '   pbar:   progress bar (pointer to progressbar_s struct)
-'   o:      options
-    pbar.opts := o
+'   c:      color
+    pbar.border_color := c
 
 
-pub set_outline_color(^progressbar_s pbar, c)
-' Set progressbar outline color
+pub set_bar_color(^progressbar_s pbar, c)
+' Set progressbar border/outline color
 '   pbar:   progress bar (pointer to progressbar_s struct)
-    pbar.outline_color := c
+'   c:      color
+    pbar.bar_color := c
 
 
-pub set_state(^progressbar_s pbar, s)
+pub set_bgcolor(^progressbar_s pbar, c)
+' Set progressbar background color
+'   pbar:   progress bar (pointer to progressbar_s struct)
+'   c:      color
+    pbar.bgcolor := c
+
+
+pub set_value(^progressbar_s pbar, v)
 ' Set progress bar percentage
 '   pbar:   progress bar (pointer to progressbar_s struct)
-'   s:  percentage (0..100)
-    pbar.state := s
+'   v:      percentage (0..100)
+    pbar.value := v
 
 
 dat
