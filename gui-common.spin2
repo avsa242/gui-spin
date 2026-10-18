@@ -11,7 +11,8 @@ con
         pub plot(x, y, c)
         pub pos_xy(x, y)
         pub puts(p_str)
-        pub set_context_area(sx, sy, ex, ey)
+        pub set_clip_rect(sx, sy, ex, ey)
+        pub set_font(i)
         pub show_context()
         pub str_width(p_str): w
         pub vline(x, ys, len, c)

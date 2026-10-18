@@ -4,7 +4,7 @@
     Description:    GUI element: text labels
     Author:         Jesse Burt
     Started:        Sep 5, 2026
-    Updated:        Oct 12, 2026
+    Updated:        Oct 18, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -25,6 +25,7 @@ con
     DEF_HEIGHT          = 64
     DEF_BG_COLOR        = 0
     DEF_FG_COLOR        = 1
+    DEF_FONT            = 0
 
 
 #include "gui-common.spin2"
@@ -47,7 +48,8 @@ con
         widget_s widget, ...
         long bgcolor, ...
         long fgcolor, ...
-        long p_text)
+        long p_text, ...
+        byte font_idx)
 
 
 var
@@ -117,6 +119,7 @@ pub draw(p_txt=0) | ^text_label_s txt, ^dispdrv_i disp
         disp.bgcolor(txt.bgcolor)
         disp.fgcolor(txt.fgcolor)
 
+    disp.set_font(txt.font_idx)
     disp.pos_xy(txt.widget.x, txt.widget.y)
     disp.puts(txt.p_text)
 
@@ -133,6 +136,13 @@ pub set_fgcolor(^text_label_s txt, fgc)
 '   txt:    pointer to text label struct
 '   fgc:    foreground/text color
     txt.fgcolor := fgc
+
+
+pub set_font(^text_label_s txt, fidx)
+' Set a text label's font
+'   txt:    pointer to text label struct
+'   fidx:   font index #
+    txt.font_idx := fidx
 
 
 dat
