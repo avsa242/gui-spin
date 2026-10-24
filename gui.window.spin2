@@ -241,6 +241,20 @@ pub obj_detach_nr(^window_s win, obj_nr): n
     return -1
 
 
+pub posx_center(^window_s win): y
+' Get the horizontal center position within a window
+'   win:        pointer to window struct
+'   Returns:    x-coordinate (pixels)
+    return win.widget.w / 2
+
+
+pub posy_center(^window_s win): y
+' Get the vertical center position within a window
+'   win:        pointer to window struct
+'   Returns:    y-coordinate (pixels)
+    return win.widget.h / 2
+
+
 pub set_border_color(^window_s win, c)
 ' Set a window's border color
 '   win:    pointer to window struct
