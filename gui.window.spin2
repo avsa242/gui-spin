@@ -4,7 +4,7 @@
     Description:    GUI element: windows
     Author:         Jesse Burt
     Started:        Sep 5, 2026
-    Updated:        Oct 12, 2026
+    Updated:        Oct 24, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -38,12 +38,14 @@ con
 
 obj
 
-    wgui: "gui.widget"
+    wgui:   "gui.widget"
+    scr:    "gui.screen"
 
 
 con
 
     struct widget_s = wgui.widget_s
+    struct screen_s = scr.screen_s
 
     struct window_s(...
         widget_s widget, ...
@@ -60,14 +62,16 @@ var
     byte        _nr_win
 
 
-pub create(^dispdrv_i dobj, x, y, w=0, h=0, gx=0, gy=0): ^window_s win
+pub create(^screen_s scr, w=0, h=0, gx=0, gy=0): ^window_s win
 ' Create a window
 '   dobj:       display driver object instance (pointer to object)
-'   x, y:       upper-left corner of window's position (pixels)
 '   w, h:       dimensions (optional; sets DEF_WIDTH and DEF_HEIGHT if not specified)
 '   gx, gy:     grid spacing of contained GUI objects (pixels)
 '   Returns:    pointer to window struct on success
 '               0 on failure (window array full)
+
+'   NOTE:       The window will initially be placed at the parent screen's cursor coordinates.
+
     if ( _nr_win < MAX_WINDOWS )
         if ( w < 1 )
             w := DEF_WIDTH
@@ -77,14 +81,16 @@ pub create(^dispdrv_i dobj, x, y, w=0, h=0, gx=0, gy=0): ^window_s win
         [win] := @window[_nr_win]               ' point to next available window memory
 
         win.widget.type := wgui.TYPE_WINDOW     ' set up widget header
-        win.widget.x := x
-        win.widget.y := y
+        win.widget.x := scr.container.cursor.x
+        win.widget.y := scr.container.cursor.y
         win.widget.w := w
         win.widget.h := h
-        win.widget.abs_x := x
-        win.widget.abs_y := y
+        win.widget.abs_x := win.widget.x
+        win.widget.abs_y := win.widget.y
+        win.widget.parent := [scr]
+        win.widget.draw := @draw
+        win.widget.p_disp := scr.p_disp         ' point to display driver object
 
-        window[_nr_win].widget.p_disp := [dobj] ' point to display driver object
         win.grid_x := gx                        ' set the new window's grid spacing
         win.grid_y := gy
         ifnot ( win.grid_x )                    ' (default to 1 if not specified)
@@ -102,7 +108,7 @@ pub create(^dispdrv_i dobj, x, y, w=0, h=0, gx=0, gy=0): ^window_s win
         win.widget.flags := DEF_FLAGS
 
         _nr_win++
-        DEBUG("[win] create: x=", udec_(win.widget.x), " y=", udec_(win.widget.y), " abs_x=", udec_(win.widget.abs_x), " abs_y=", udec_(win.widget.abs_y) )
+        DEBUG("[win] create: sx=", udec_(win.widget.x), " sy=", udec_(win.widget.y), " ex=", udec_(win.widget.x+win.widget.w-1), " ey=", udec_(win.widget.y+win.widget.h-1) )
 
         return
 
@@ -112,6 +118,7 @@ pub create(^dispdrv_i dobj, x, y, w=0, h=0, gx=0, gy=0): ^window_s win
 
 pub count(): t
 ' Get the number of defined windows
+    DEBUG("[win] ", udec_(_nr_win), " windows")
     return _nr_win
 
 
@@ -146,6 +153,7 @@ pub draw(p_win=0) | ^window_s win, ^dispdrv_i disp, x, y
                     x+win.widget.w-2, y+win.widget.h-2, ...
                     win.fill_color, ...
                     true)
+    DEBUG("[gui.window] draw(", uhex_(p_win), ") ", udec_(x), udec_(y), udec_(x+win.widget.w-1), udec_(y+win.widget.h-1) )
 
 
 pub obj_attach(^window_s win, p_obj): n | ^widget_s wp, ex, ey
@@ -157,7 +165,7 @@ pub obj_attach(^window_s win, p_obj): n | ^widget_s wp, ex, ey
     n := win.container.count
     if ( n < MAX_OBJECTS )
         [wp] := p_obj
-        DEBUG("[win] obj_attach: obj type ", udec_(wp.type), " w=", udec_(wp.w) )
+        DEBUG("[win] obj_attach: obj type ", zstr_(lookup(wp.type: @"TYPE_WINDOW", @"TYPE_BUTTON", @"TYPE_TEXTLABEL", @"TYPE_PROGRESSBAR") ), " w=", udec_(wp.w) )
         DEBUG("[win] obj_attach: cursor before ", udec_(win.container.cursor.x), udec_(win.container.cursor.y) )
         win.container.buffer[n] := p_obj        ' add the object's pointer
         win.container.count++
@@ -177,6 +185,7 @@ pub obj_attach(^window_s win, p_obj): n | ^widget_s wp, ex, ey
         DEBUG("[win] obj_attach: cursor after ", udec_(win.container.cursor.x), udec_(win.container.cursor.y) )
         return
 
+    DEBUG("[win] obj_attach: window ", uhex_(@win), " error: out of memory (object buffer full)")
     return -1
 
 

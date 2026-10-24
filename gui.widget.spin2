@@ -4,7 +4,7 @@
     Description:    GUI widget (common to all GUI elements)
     Author:         Jesse Burt
     Started:        Oct 11, 2026
-    Updated:        Oct 18, 2026
+    Updated:        Oct 24, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -36,6 +36,13 @@ con
 #include "gui-common.spin2"
 
 
+pub height(^widget_s obj_w): h
+' Get a widget's height
+'   obj_w:      pointer to widget struct
+'   Returns:    widget height
+    return obj_w.h
+
+
 pub obj_type(^widget_s obj_w): t
 ' Get a widget's type
 '   obj_w:      pointer to widget struct
@@ -53,6 +60,16 @@ pub set_flags(^widget_s obj_w, f)
 pub set_touch_id(^widget_s obj_w, tid)
 ' Set a widget's touchscreen ID
     obj_w.touch_id := tid
+
+
+pub set_dims(^widget_s obj_w, w, h)
+' Set a widget's dimensions
+'   obj_w:      pointer to widget struct
+'   w:          width (pixels)
+'   h:          height (pixels)
+    obj_w.w := w
+    obj_w.h := h
+    DEBUG("[widget] set_dims type=", zstr_(lookup(obj_w.type: @"TYPE_WINDOW", @"TYPE_BUTTON", @"TYPE_TEXTLABEL", @"TYPE_PROGRESSBAR") ), " w=", udec_(obj_w.w), " h=", udec_(obj_w.h) )
 
 
 pub set_widget_x(^widget_s obj_w, x)
@@ -73,6 +90,13 @@ pub widget_area(^widget_s obj_w): sx, sy, ex, ey
     sy := obj_w.abs_y
     ex := obj_w.w-1
     ey := obj_w.h-1
+
+
+pub width(^widget_s obj_w): w
+' Get a widget's width
+'   obj_w:      pointer to widget struct
+'   Returns:    widget width
+    return obj_w.w
 
 
 dat

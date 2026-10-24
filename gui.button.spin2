@@ -155,20 +155,23 @@ pub obj_attach(^button_s btn, p_obj): n | ^widget_s wp, ex, ey
     n := btn.container.count
     if ( n < MAX_OBJECTS )
         [wp] := p_obj
-
+        DEBUG("[button] obj_attach: type=", zstr_(lookup(wp.type: @"TYPE_WINDOW", @"TYPE_BUTTON", @"TYPE_TEXTLABEL", @"TYPE_PROGRESSBAR") ), " w=", udec_(wp.w) )
+        DEBUG("[button] obj_attach: cursor before ", udec_(btn.container.cursor.x), udec_(btn.container.cursor.y) )
         ' move the container cursor by the size of the object,
         '   wrapping around to the left/top if needed
         btn.container.cursor.x += wp.w
         if ( btn.container.cursor.x > (btn.widget.x+btn.widget.w-1) )
+            DEBUG("[button] obj_attach: cursor.x=", udec_(btn.container.cursor.x), "; wrapping")
             btn.container.cursor.x := 0
             btn.container.cursor.y += wp.h
             if ( btn.container.cursor.y > (btn.widget.y+btn.widget.h-1) )
+                DEBUG("[button] obj_attach: cursor.y=", udec_(button.container.cursor.y), "; wrapping")
                 btn.container.cursor.y := 0
 
         btn.container.buffer[n] := p_obj        ' add the object's pointer
 
         btn.container.count++
-
+        DEBUG("[button] obj_attach: cursor after ", udec_(btn.container.cursor.x), udec_(btn.container.cursor.y) )
         return
 
     return -1
