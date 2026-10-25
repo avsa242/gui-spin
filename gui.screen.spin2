@@ -123,6 +123,25 @@ pub obj_attach(^screen_s scr, p_obj, x=-1, y=-1): n | ^widget_s wp
     return -1
 
 
+pub obj_detach(^screen_s scr, p_obj): o
+' Detach an object from a screen (by pointer to object)
+'   scr:        pointer to screen struct
+'   p_obj:      pointer to object struct to detach
+'   Returns:    array index of object within screen on success
+'               -1 on failure (object with that pointer not found)
+    repeat o from 0 to scr.container.count-1    ' find the object's pointer in the tree
+        if ( scr.container.buffer[o] == p_obj ) ' matching pointer?
+            if ( o < (MAX_OBJECTS-1) )          ' pack pointers downwards if we're not at the end
+                longmove(   @scr.container.buffer[o], ...
+                            @scr.container.buffer[o+1], ...
+                            MAX_OBJECTS-1-o)
+            scr.container.buffer[MAX_OBJECTS-1] := 0
+            scr.container.count--
+            return o
+
+    return -1                                   ' pointer not found in the tree
+
+
 dat
 {
 Copyright 2026 Jesse Burt
