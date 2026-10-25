@@ -4,7 +4,7 @@
     Description:    GUI element: windows
     Author:         Jesse Burt
     Started:        Sep 5, 2026
-    Updated:        Oct 24, 2026
+    Updated:        Oct 25, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -169,6 +169,34 @@ pub obj_attach(^window_s win, p_obj): n | ^widget_s wp, ex, ey
         DEBUG("[win] obj_attach: cursor before ", udec_(win.container.cursor.x), udec_(win.container.cursor.y) )
         win.container.buffer[n] := p_obj        ' add the object's pointer
         win.container.count++
+
+        ' modify the widget's position according to its layout gravity
+        case wp.layout_gravity
+            wgui.GRAV_UPPER_LEFT:
+                ' no change
+                wp.x := win.container.cursor.x
+                wp.y := win.container.cursor.y
+            wgui.GRAV_CENTER_TOP:
+                wp.x := (win.widget.w/2)-(wp.w/2)
+            wgui.GRAV_UPPER_RIGHT:
+                wp.x := win.widget.w-win.grid_x-wp.w
+            wgui.GRAV_CENTER_RIGHT:
+                wp.x := win.widget.w-win.grid_x-wp.w
+                wp.y := (win.widget.h/2)-(wp.h/2)
+            wgui.GRAV_LOWER_RIGHT:
+                wp.x := win.widget.w-win.grid_x-wp.w
+                wp.y := win.widget.h-win.grid_y-wp.h
+            wgui.GRAV_CENTER_BOTTOM:
+                wp.x := (win.widget.w/2)-(wp.w/2)
+                wp.y := win.widget.h-win.grid_y-wp.h
+            wgui.GRAV_LOWER_LEFT:
+                wp.y := win.widget.h-win.grid_y-wp.h
+            wgui.GRAV_CENTER_LEFT:
+                wp.y := (win.widget.h/2)-(wp.h/2)
+            wgui.GRAV_CENTER:
+                wp.x := (win.widget.w/2)-(wp.w/2)
+                wp.y := (win.widget.h/2)-(wp.h/2)
+
 
         ' move the window cursor by the size of the obj, wrapping around to the left (or top)
         win.container.cursor.x += (wp.w+win.grid_x)
