@@ -81,12 +81,8 @@ pub create(^screen_s scr, w=0, h=0, gx=0, gy=0): ^window_s win
         [win] := @window[_nr_win]               ' point to next available window memory
 
         win.widget.type := TYPE_WINDOW          ' set up widget header
-        win.widget.x := scr.container.cursor.x
-        win.widget.y := scr.container.cursor.y
         win.widget.w := w
         win.widget.h := h
-        win.widget.abs_x := win.widget.x
-        win.widget.abs_y := win.widget.y
         win.widget.parent := [scr]
         win.widget.draw := @draw
         win.widget.p_disp := scr.p_disp         ' point to display driver object
@@ -139,8 +135,8 @@ pub draw(p_win=0) | ^window_s win, ^dispdrv_i disp, x, y
 
     [disp] := win.widget.p_disp
 
-    x := win.widget.abs_x
-    y := win.widget.abs_y
+    x := win.widget.x
+    y := win.widget.y
 
     if ( win.widget.flags & FLAG_DRAW_OUTLINE ) ' show the window outline
         disp.box(   x, y, ...
@@ -173,9 +169,8 @@ pub obj_attach(^window_s win, p_obj): n | ^widget_s wp, ex, ey
         ' modify the widget's position according to its layout gravity
         case wp.layout_gravity
             GRAV_UPPER_LEFT:
-                ' no change
-                wp.x := win.container.cursor.x
-                wp.y := win.container.cursor.y
+                wp.x := win.grid_x
+                wp.y := win.grid_y
             GRAV_CENTER_TOP:
                 wp.x := (win.widget.w/2)-(wp.w/2)
             GRAV_UPPER_RIGHT:
@@ -196,6 +191,10 @@ pub obj_attach(^window_s win, p_obj): n | ^widget_s wp, ex, ey
             GRAV_CENTER:
                 wp.x := (win.widget.w/2)-(wp.w/2)
                 wp.y := (win.widget.h/2)-(wp.h/2)
+            other:
+                ' no gravity setting; use the cursor position
+                wp.x := win.container.cursor.x
+                wp.y := win.container.cursor.y
 
 
         ' move the window cursor by the size of the obj, wrapping around to the left (or top)

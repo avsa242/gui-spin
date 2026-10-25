@@ -58,6 +58,37 @@ pub obj_attach(^screen_s scr, p_obj): n | ^widget_s wp
             DEBUG("[gui.screen] obj_attach: error: type <> TYPE_WINDOW")
             return -1
 
+        ' modify the widget's position according to its layout gravity
+        case wp.layout_gravity
+            GRAV_UPPER_LEFT:
+                wp.x := 0
+                wp.y := 0
+            GRAV_CENTER_TOP:
+                wp.x := (scr.width/2)-(wp.w/2)
+            GRAV_UPPER_RIGHT:
+                wp.x := scr.width-wp.w
+            GRAV_CENTER_RIGHT:
+                wp.x := scr.width-wp.w
+                wp.y := (scr.height/2)-(wp.h/2)
+            GRAV_LOWER_RIGHT:
+                wp.x := scr.width-wp.w
+                wp.y := scr.height-wp.h
+            GRAV_CENTER_BOTTOM:
+                wp.x := (scr.width/2)-(wp.w/2)
+                wp.y := scr.height-wp.h
+            GRAV_LOWER_LEFT:
+                wp.y := scr.height-wp.h
+            GRAV_CENTER_LEFT:
+                wp.y := (scr.height/2)-(wp.h/2)
+            GRAV_CENTER:
+                wp.x := (scr.width/2)-(wp.w/2)
+                wp.y := (scr.height/2)-(wp.h/2)
+            other:
+                ' no gravity setting; use the cursor position
+                wp.x := scr.container.cursor.x
+                wp.y := scr.container.cursor.y
+
+
         DEBUG("[gui.screen] obj_attach: cursor before ", udec_(screen.container.cursor.x), udec_(screen.container.cursor.y) )
         screen.container.buffer[n] := p_obj        ' add the object's pointer
         screen.container.count++

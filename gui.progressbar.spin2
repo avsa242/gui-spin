@@ -67,7 +67,7 @@ var
     byte            _nr_progbars
 
 
-pub create(p_parent, w=0, h=0): ^progressbar_s p | ct, sx, sy, ^widget_s wp
+pub create(p_parent, w=0, h=0): ^progressbar_s p | ct
 ' Create a progress bar object (use currently set defaults)
 '   pwin:   parent window (pointer to window_s struct)
 '   Returns:
@@ -84,16 +84,10 @@ pub create(p_parent, w=0, h=0): ^progressbar_s p | ct, sx, sy, ^widget_s wp
         ct := long[p_parent][0]                 ' read container type
         if ( ct == TYPE_WINDOW )                ' get coords from parent container
             p.widget.p_disp := window_s[p_parent].widget.p_disp
-            sx := window_s[p_parent].container.cursor.x
-            sy := window_s[p_parent].container.cursor.y
         elseif ( ct == TYPE_BUTTON )
             p.widget.p_disp := button_s[p_parent].widget.p_disp
-            sx := button_s[p_parent].container.cursor.x
-            sy := button_s[p_parent].container.cursor.y
 
         p.widget.type := TYPE_PROGRESSBAR
-        p.widget.x := sx
-        p.widget.y := sy
         p.widget.w := w
         p.widget.h := h
         p.widget.parent := p_parent
@@ -117,8 +111,8 @@ pub draw(p_pbar=0) | ^progressbar_s pbar, ^window_s win, ^dispdrv_i disp, sx, sy
     [disp] := pbar.widget.p_disp                ' get the display driver interface from the parent
     [win] := pbar.widget.parent                 ' get handle on parent window
 
-    sx := win.widget.x+pbar.widget.x+1
-    sy := win.widget.y+pbar.widget.y+1
+    sx := pbar.widget.x
+    sy := pbar.widget.y
     ex := sx + pbar.widget.w-1
     ey := sy + pbar.widget.h-1
     p := (0 #> pbar.value <# 100)

@@ -4,7 +4,7 @@
     Description:    GUI element: text labels
     Author:         Jesse Burt
     Started:        Sep 5, 2026
-    Updated:        Oct 18, 2026
+    Updated:        Oct 25, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -59,7 +59,7 @@ var
     byte            _nr_text_labels
 
  
-pub create(p_parent, p_txt, w=0, h=0): ^text_label_s txt | ct, sx, sy
+pub create(p_parent, p_txt, w=0, h=0): ^text_label_s txt | ct
 ' Create a text label
 '   p_parent:   parent container (pointer to button_s or window_s struct)
 '   p_txt:      text string
@@ -75,18 +75,12 @@ pub create(p_parent, p_txt, w=0, h=0): ^text_label_s txt | ct, sx, sy
         [txt] := @text_label[_nr_text_labels]
 
         ct := long[p_parent][0]                 ' read container type
-        if ( ct == TYPE_WINDOW )                ' get coords from parent container
+        if ( ct == TYPE_WINDOW )                ' get display driver from parent container
             txt.widget.p_disp := window_s[p_parent].widget.p_disp
-            sx := window_s[p_parent].container.cursor.x
-            sy := window_s[p_parent].container.cursor.y
         elseif ( ct == TYPE_BUTTON )
             txt.widget.p_disp := button_s[p_parent].widget.p_disp
-            sx := button_s[p_parent].container.cursor.x
-            sy := button_s[p_parent].container.cursor.y
 
         txt.widget.type := TYPE_TEXTLABEL
-        txt.widget.x := sx
-        txt.widget.y := sy
         txt.widget.w := w
         txt.widget.h := h
         txt.widget.parent := p_parent
