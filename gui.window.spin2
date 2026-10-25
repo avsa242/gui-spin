@@ -152,10 +152,12 @@ pub draw(p_win=0) | ^window_s win, ^dispdrv_i disp, x, y
     DEBUG("[gui.window] draw(", uhex_(p_win), ") ", udec_(x), udec_(y), udec_(x+win.widget.w-1), udec_(y+win.widget.h-1) )
 
 
-pub obj_attach(^window_s win, p_obj): n | ^widget_s wp, ex, ey
+pub obj_attach(^window_s win, p_obj, x=-1, y=-1): n | ^widget_s wp, ex, ey
 ' Attach a GUI object to a window's tree
 '   win:    pointer to window struct to attach object to
 '   p_obj:  pointer to object struct
+'   x, y:       position of object (optional; default is the object's gravity setting or
+'               the current cursor position)
 '   Returns:    index in object tree array on success
 '               -1 on failure (object array is full)
     n := win.container.count
@@ -166,36 +168,40 @@ pub obj_attach(^window_s win, p_obj): n | ^widget_s wp, ex, ey
         win.container.buffer[n] := p_obj        ' add the object's pointer
         win.container.count++
 
-        ' modify the widget's position according to its layout gravity
-        case wp.layout_gravity
-            GRAV_UPPER_LEFT:
-                wp.x := win.grid_x
-                wp.y := win.grid_y
-            GRAV_CENTER_TOP:
-                wp.x := (win.widget.w/2)-(wp.w/2)
-            GRAV_UPPER_RIGHT:
-                wp.x := win.widget.w-win.grid_x-wp.w
-            GRAV_CENTER_RIGHT:
-                wp.x := win.widget.w-win.grid_x-wp.w
-                wp.y := (win.widget.h/2)-(wp.h/2)
-            GRAV_LOWER_RIGHT:
-                wp.x := win.widget.w-win.grid_x-wp.w
-                wp.y := win.widget.h-win.grid_y-wp.h
-            GRAV_CENTER_BOTTOM:
-                wp.x := (win.widget.w/2)-(wp.w/2)
-                wp.y := win.widget.h-win.grid_y-wp.h
-            GRAV_LOWER_LEFT:
-                wp.y := win.widget.h-win.grid_y-wp.h
-            GRAV_CENTER_LEFT:
-                wp.y := (win.widget.h/2)-(wp.h/2)
-            GRAV_CENTER:
-                wp.x := (win.widget.w/2)-(wp.w/2)
-                wp.y := (win.widget.h/2)-(wp.h/2)
-            other:
-                ' no gravity setting; use the cursor position
-                wp.x := win.container.cursor.x
-                wp.y := win.container.cursor.y
-
+        if ( (x == -1) and (y == -1) )
+            ' modify the widget's position according to its layout gravity
+            case wp.layout_gravity
+                GRAV_UPPER_LEFT:
+                    wp.x := win.grid_x
+                    wp.y := win.grid_y
+                GRAV_CENTER_TOP:
+                    wp.x := (win.widget.w/2)-(wp.w/2)
+                GRAV_UPPER_RIGHT:
+                    wp.x := win.widget.w-win.grid_x-wp.w
+                GRAV_CENTER_RIGHT:
+                    wp.x := win.widget.w-win.grid_x-wp.w
+                    wp.y := (win.widget.h/2)-(wp.h/2)
+                GRAV_LOWER_RIGHT:
+                    wp.x := win.widget.w-win.grid_x-wp.w
+                    wp.y := win.widget.h-win.grid_y-wp.h
+                GRAV_CENTER_BOTTOM:
+                    wp.x := (win.widget.w/2)-(wp.w/2)
+                    wp.y := win.widget.h-win.grid_y-wp.h
+                GRAV_LOWER_LEFT:
+                    wp.y := win.widget.h-win.grid_y-wp.h
+                GRAV_CENTER_LEFT:
+                    wp.y := (win.widget.h/2)-(wp.h/2)
+                GRAV_CENTER:
+                    wp.x := (win.widget.w/2)-(wp.w/2)
+                    wp.y := (win.widget.h/2)-(wp.h/2)
+                other:
+                    ' no gravity setting; use the cursor position
+                    wp.x := win.container.cursor.x
+                    wp.y := win.container.cursor.y
+        else
+            ' manually place
+            wp.x := x
+            wp.y := y
 
         ' move the window cursor by the size of the obj, wrapping around to the left (or top)
         win.container.cursor.x += (wp.w+win.grid_x)
