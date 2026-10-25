@@ -4,7 +4,7 @@
     Description:    GUI screen setup/container
     Author:         Jesse Burt
     Started:        Oct 18, 2026
-    Updated:        Oct 24, 2026
+    Updated:        Oct 25, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -17,18 +17,12 @@ con
     MAX_OBJECTS = 16
 
 
+#include "widget-common.spin2"
 #include "gui-common.spin2"
 #include "container-common.spin2"
 
 
-obj
-
-    wgui:   "gui.widget"
-
-
 con
-
-    struct widget_s = wgui.widget_s
 
     struct screen_s(...
         long p_disp, ...
@@ -60,7 +54,7 @@ pub obj_attach(^screen_s scr, p_obj): n | ^widget_s wp
     n := screen.container.count
     if ( n < MAX_OBJECTS )
         [wp] := p_obj
-        if ( wp.type <> wgui.TYPE_WINDOW )
+        if ( wp.type <> TYPE_WINDOW )
             DEBUG("[gui.screen] obj_attach: error: type <> TYPE_WINDOW")
             return -1
 

@@ -11,9 +11,11 @@
 {Spin2_v45}
 
 
+#include "widget-common.spin2"
+
 con
 
-    WIDGET_TYPE         = wgui.TYPE_WINDOW
+    WIDGET_TYPE         = TYPE_WINDOW
 
     ' limits
     MAX_WINDOWS         = 4
@@ -38,13 +40,11 @@ con
 
 obj
 
-    wgui:   "gui.widget"
     scr:    "gui.screen"
 
 
 con
 
-    struct widget_s = wgui.widget_s
     struct screen_s = scr.screen_s
 
     struct window_s(...
@@ -80,7 +80,7 @@ pub create(^screen_s scr, w=0, h=0, gx=0, gy=0): ^window_s win
 
         [win] := @window[_nr_win]               ' point to next available window memory
 
-        win.widget.type := wgui.TYPE_WINDOW     ' set up widget header
+        win.widget.type := TYPE_WINDOW          ' set up widget header
         win.widget.x := scr.container.cursor.x
         win.widget.y := scr.container.cursor.y
         win.widget.w := w
@@ -172,28 +172,28 @@ pub obj_attach(^window_s win, p_obj): n | ^widget_s wp, ex, ey
 
         ' modify the widget's position according to its layout gravity
         case wp.layout_gravity
-            wgui.GRAV_UPPER_LEFT:
+            GRAV_UPPER_LEFT:
                 ' no change
                 wp.x := win.container.cursor.x
                 wp.y := win.container.cursor.y
-            wgui.GRAV_CENTER_TOP:
+            GRAV_CENTER_TOP:
                 wp.x := (win.widget.w/2)-(wp.w/2)
-            wgui.GRAV_UPPER_RIGHT:
+            GRAV_UPPER_RIGHT:
                 wp.x := win.widget.w-win.grid_x-wp.w
-            wgui.GRAV_CENTER_RIGHT:
+            GRAV_CENTER_RIGHT:
                 wp.x := win.widget.w-win.grid_x-wp.w
                 wp.y := (win.widget.h/2)-(wp.h/2)
-            wgui.GRAV_LOWER_RIGHT:
+            GRAV_LOWER_RIGHT:
                 wp.x := win.widget.w-win.grid_x-wp.w
                 wp.y := win.widget.h-win.grid_y-wp.h
-            wgui.GRAV_CENTER_BOTTOM:
+            GRAV_CENTER_BOTTOM:
                 wp.x := (win.widget.w/2)-(wp.w/2)
                 wp.y := win.widget.h-win.grid_y-wp.h
-            wgui.GRAV_LOWER_LEFT:
+            GRAV_LOWER_LEFT:
                 wp.y := win.widget.h-win.grid_y-wp.h
-            wgui.GRAV_CENTER_LEFT:
+            GRAV_CENTER_LEFT:
                 wp.y := (win.widget.h/2)-(wp.h/2)
-            wgui.GRAV_CENTER:
+            GRAV_CENTER:
                 wp.x := (win.widget.w/2)-(wp.w/2)
                 wp.y := (win.widget.h/2)-(wp.h/2)
 

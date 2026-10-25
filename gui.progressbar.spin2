@@ -4,7 +4,7 @@
     Description:    Progress bar GUI widget
     Author:         Jesse Burt
     Started:        Sep 5, 2026
-    Updated:        Oct 18, 2026
+    Updated:        Oct 25, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 
@@ -16,9 +16,12 @@
 }
 {Spin2_v45}
 
+
+#include "widget-common.spin2"
+
 con
 
-    WIDGET_TYPE         = wgui.TYPE_PROGRESSBAR
+    WIDGET_TYPE         = TYPE_PROGRESSBAR
 
     ' limits
     MAX_PROGRESS_BARS   = 1
@@ -40,14 +43,12 @@ con
 
 obj
 
-    wgui:   "gui.widget"
     window: "gui.window"
     button: "gui.button"
 
 
 con
 
-    struct widget_s = wgui.widget_s
     struct window_s = window.window_s
     struct button_s = button.button_s
 
@@ -81,16 +82,16 @@ pub create(p_parent, w=0, h=0): ^progressbar_s p | ct, sx, sy, ^widget_s wp
         [p] := @prog_bar[_nr_progbars]
 
         ct := long[p_parent][0]                 ' read container type
-        if ( ct == wgui.TYPE_WINDOW )           ' get coords from parent container
+        if ( ct == TYPE_WINDOW )                ' get coords from parent container
             p.widget.p_disp := window_s[p_parent].widget.p_disp
             sx := window_s[p_parent].container.cursor.x
             sy := window_s[p_parent].container.cursor.y
-        elseif ( ct == wgui.TYPE_BUTTON )
+        elseif ( ct == TYPE_BUTTON )
             p.widget.p_disp := button_s[p_parent].widget.p_disp
             sx := button_s[p_parent].container.cursor.x
             sy := button_s[p_parent].container.cursor.y
 
-        p.widget.type := wgui.TYPE_PROGRESSBAR
+        p.widget.type := TYPE_PROGRESSBAR
         p.widget.x := sx
         p.widget.y := sy
         p.widget.w := w

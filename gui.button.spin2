@@ -11,9 +11,11 @@
 {Spin2_v45}
 
 
+#include "widget-common.spin2"
+
 con
 
-    WIDGET_TYPE         = wgui.TYPE_BUTTON
+    WIDGET_TYPE         = TYPE_BUTTON
 
     MAX_BUTTONS         = 16
     MAX_OBJECTS         = 1
@@ -38,13 +40,11 @@ con
 
 obj
 
-    wgui: "gui.widget"
     window: "gui.window"
 
 
 con
 
-    struct widget_s = wgui.widget_s
     struct window_s = window.window_s
 
 
@@ -88,7 +88,7 @@ pub create(^window_s win, w=0, h=0): ^button_s btn
         btn.widget.h := h
         btn.widget.abs_x := win.widget.abs_x+btn.widget.x
         btn.widget.abs_y := win.widget.abs_y+btn.widget.y
-        btn.widget.type := wgui.TYPE_BUTTON
+        btn.widget.type := TYPE_BUTTON
         btn.widget.p_disp := win.widget.p_disp
         btn.widget.parent := [win]              ' save a reference to the parent window
         btn.widget.draw := @draw
@@ -159,28 +159,28 @@ pub obj_attach(^button_s btn, p_obj): n | ^widget_s wp, ex, ey
         DEBUG("[button] obj_attach: cursor before ", udec_(btn.container.cursor.x), udec_(btn.container.cursor.y) )
         ' modify the widget's position according to its layout gravity
         case wp.layout_gravity
-            wgui.GRAV_UPPER_LEFT:
+            GRAV_UPPER_LEFT:
                 ' no change
                 wp.x := btn.container.cursor.x
                 wp.y := btn.container.cursor.y
-            wgui.GRAV_CENTER_TOP:
+            GRAV_CENTER_TOP:
                 wp.x := (btn.widget.w/2)-(wp.w/2)
-            wgui.GRAV_UPPER_RIGHT:
+            GRAV_UPPER_RIGHT:
                 wp.x := btn.widget.w-wp.w
-            wgui.GRAV_CENTER_RIGHT:
+            GRAV_CENTER_RIGHT:
                 wp.x := btn.widget.w-wp.w
                 wp.y := (btn.widget.h/2)-(wp.h/2)
-            wgui.GRAV_LOWER_RIGHT:
+            GRAV_LOWER_RIGHT:
                 wp.x := btn.widget.w-wp.w
                 wp.y := btn.widget.h-wp.h
-            wgui.GRAV_CENTER_BOTTOM:
+            GRAV_CENTER_BOTTOM:
                 wp.x := (btn.widget.w/2)-(wp.w/2)
                 wp.y := btn.widget.h-wp.h
-            wgui.GRAV_LOWER_LEFT:
+            GRAV_LOWER_LEFT:
                 wp.y := btn.widget.h-wp.h
-            wgui.GRAV_CENTER_LEFT:
+            GRAV_CENTER_LEFT:
                 wp.y := (btn.widget.h/2)-(wp.h/2)
-            wgui.GRAV_CENTER:
+            GRAV_CENTER:
                 wp.x := (btn.widget.w/2)-(wp.w/2)
                 wp.y := (btn.widget.h/2)-(wp.h/2)
 

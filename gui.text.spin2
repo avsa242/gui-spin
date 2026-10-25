@@ -11,9 +11,11 @@
 {Spin2_v45}
 
 
+#include "widget-common.spin2"
+
 con
 
-    WIDGET_TYPE         = wgui.TYPE_TEXTLABEL
+    WIDGET_TYPE         = TYPE_TEXTLABEL
 
     MAX_TEXT_LABELS     = 16
 
@@ -33,14 +35,12 @@ con
 
 obj
 
-    wgui:   "gui.widget"
     window: "gui.window"
     button: "gui.button"
 
 
 con
 
-    struct widget_s = wgui.widget_s
     struct window_s = window.window_s
     struct button_s = button.button_s
 
@@ -75,16 +75,16 @@ pub create(p_parent, p_txt, w=0, h=0): ^text_label_s txt | ct, sx, sy
         [txt] := @text_label[_nr_text_labels]
 
         ct := long[p_parent][0]                 ' read container type
-        if ( ct == wgui.TYPE_WINDOW )           ' get coords from parent container
+        if ( ct == TYPE_WINDOW )                ' get coords from parent container
             txt.widget.p_disp := window_s[p_parent].widget.p_disp
             sx := window_s[p_parent].container.cursor.x
             sy := window_s[p_parent].container.cursor.y
-        elseif ( ct == wgui.TYPE_BUTTON )
+        elseif ( ct == TYPE_BUTTON )
             txt.widget.p_disp := button_s[p_parent].widget.p_disp
             sx := button_s[p_parent].container.cursor.x
             sy := button_s[p_parent].container.cursor.y
 
-        txt.widget.type := wgui.TYPE_TEXTLABEL
+        txt.widget.type := TYPE_TEXTLABEL
         txt.widget.x := sx
         txt.widget.y := sy
         txt.widget.w := w

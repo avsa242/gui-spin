@@ -11,40 +11,7 @@
 
 {Spin2_v45}
 
-
-con
-
-    ' widget header
-    struct widget_s(...
-        long type, ...                          ' GUI widget type
-        long p_disp, ...                        ' display driver pointer
-        long parent, ...                        ' reference to parent widget/object
-        long draw, ...                          ' draw function pointer
-        long flags, ...                         ' draw flags/options
-        long event, ...                         ' events
-        word abs_x, abs_y, ...                  ' screen coordinates    xxx review: needed?
-        word x, y, w, h, ...                    ' position, dimensions
-        byte touch_id, ...                      ' touchscreen/tag ID
-        byte layout_gravity)                    ' preferred position within parent container
-
-    ' widget types
-    TYPE_WINDOW     = 1
-    TYPE_BUTTON     = 2
-    TYPE_TEXTLABEL  = 3
-    TYPE_PROGRESSBAR= 4
-
-
-    ' layout gravity
-    GRAV_UPPER_LEFT =   1 << 0
-    GRAV_CENTER_TOP =   1 << 1
-    GRAV_UPPER_RIGHT=   1 << 2
-    GRAV_CENTER_RIGHT=  1 << 3
-    GRAV_LOWER_RIGHT =  1 << 4
-    GRAV_CENTER_BOTTOM= 1 << 5
-    GRAV_LOWER_LEFT=    1 << 6
-    GRAV_CENTER_LEFT=   1 << 7
-    GRAV_CENTER =       GRAV_CENTER_TOP | GRAV_CENTER_BOTTOM
-
+#include "widget-common.spin2"
 #include "gui-common.spin2"
 
 
