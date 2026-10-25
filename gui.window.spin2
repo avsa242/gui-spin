@@ -94,8 +94,8 @@ pub create(^screen_s scr, w=0, h=0, gx=0, gy=0): ^window_s win
         ifnot ( win.grid_y )
             win.grid_y := DEF_GRID_Y
 
-        win.container.cursor.x := win.grid_x    ' init window cursor to upper left corner+grid size
-        win.container.cursor.y := win.grid_y
+        win.container.cursor.x := 0             ' init window cursor to upper left corner+grid size
+        win.container.cursor.y := 0
 
         ' initialize/clear object buffer
         longfill(@win.container.buffer, 0, MAX_OBJECTS)
