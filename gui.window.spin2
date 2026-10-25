@@ -172,8 +172,8 @@ pub obj_attach(^window_s win, p_obj, x=-1, y=-1): n | ^widget_s wp, ex, ey
             ' modify the widget's position according to its layout gravity
             case wp.layout_gravity
                 GRAV_UPPER_LEFT:
-                    wp.x := win.grid_x
-                    wp.y := win.grid_y
+                    wp.x := 0
+                    wp.y := 0
                 GRAV_CENTER_TOP:
                     wp.x := (win.widget.w/2)-(wp.w/2)
                 GRAV_UPPER_RIGHT:
