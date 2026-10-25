@@ -72,8 +72,8 @@ pub widget_area(^widget_s obj_w): sx, sy, ex, ey
 ' Get the area occupied by a widget
 '   obj_w:      pointer to widget struct
 '   Returns:    starting and ending coordinates (4 longs)
-    sx := obj_w.abs_x
-    sy := obj_w.abs_y
+    sx := obj_w.x
+    sy := obj_w.y
     ex := obj_w.w-1
     ey := obj_w.h-1
 
