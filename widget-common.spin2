@@ -4,7 +4,7 @@
     Description:    GUI widgets - common/shared code
     Author:         Jesse Burt
     Started:        Oct 25, 2026
-    Updated:        Oct 25, 2026
+    Updated:        Oct 31, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -41,6 +41,9 @@ con
     GRAV_LOWER_LEFT     = 1 << 6
     GRAV_CENTER_LEFT    = 1 << 7
     GRAV_CENTER         = GRAV_CENTER_TOP | GRAV_CENTER_BOTTOM
+
+    ' flags common to all widgets
+    FLAG_GROW_TO_FIT    = 1 << 31               ' grow (resize) a widget to fit child widgets
 
 
 dat

@@ -4,7 +4,7 @@
     Description:    GUI element: buttons
     Author:         Jesse Burt
     Started:        Aug 22, 2026
-    Updated:        Oct 25, 2026
+    Updated:        Oct 31, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -27,11 +27,11 @@ con
 
 
     ' default settings
-    DEF_WIDTH           = 128
-    DEF_HEIGHT          = 64
+    DEF_WIDTH           = 2
+    DEF_HEIGHT          = 2
     DEF_BORDER_COLOR    = 1
     DEF_FILL_COLOR      = 0
-    DEF_FLAGS           = FLAG_DRAW_OUTLINE | FLAG_DRAW_FILL | FLAG_DRAW_CORNERS
+    DEF_FLAGS           = FLAG_DRAW_OUTLINE | FLAG_DRAW_FILL | FLAG_DRAW_CORNERS | FLAG_GROW_TO_FIT
 
 
 #include "gui-common.spin2"
@@ -155,6 +155,11 @@ pub obj_attach(^button_s btn, p_obj, x=-1, y=-1): n | ^widget_s wp, ex, ey
         [wp] := p_obj
         DEBUG("[button] obj_attach: type=", zstr_(lookup(wp.type: @"TYPE_WINDOW", @"TYPE_BUTTON", @"TYPE_TEXTLABEL", @"TYPE_PROGRESSBAR") ), " w=", udec_(wp.w) )
         DEBUG("[button] obj_attach: cursor before ", udec_(btn.container.cursor.x), udec_(btn.container.cursor.y) )
+
+        if ( btn.widget.flags & FLAG_GROW_TO_FIT )
+            ' resize the button by the minimum to fit the child object
+            btn.widget.w := btn.widget.w #> wp.w
+            btn.widget.h := btn.widget.h #> wp.h
 
         if ( (x == -1) and (y == -1) )
             ' modify the widget's position according to its layout gravity
