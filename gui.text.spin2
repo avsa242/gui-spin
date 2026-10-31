@@ -86,7 +86,7 @@ pub create(p_txt, w=0, h=0): ^text_label_s txt | ct
 
         return
 
-    DEBUG("[textlabel] create: error; out of memory")
+    DEBUG("[gui.text] create: error; out of memory")
     return 0
 
 

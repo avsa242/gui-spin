@@ -102,17 +102,17 @@ pub create(w=0, h=0, gx=0, gy=0): ^window_s win
         win.widget.flags := DEF_FLAGS
 
         _nr_win++
-        DEBUG("[win] create: sx=", udec_(win.widget.x), " sy=", udec_(win.widget.y), " ex=", udec_(win.widget.x+win.widget.w-1), " ey=", udec_(win.widget.y+win.widget.h-1) )
+        DEBUG("[gui.window] create: sx=", udec_(win.widget.x), " sy=", udec_(win.widget.y), " ex=", udec_(win.widget.x+win.widget.w-1), " ey=", udec_(win.widget.y+win.widget.h-1) )
 
         return
 
-    DEBUG("[win] create: error; out of memory")
+    DEBUG("[gui.window] create: error; out of memory")
     return 0
 
 
 pub count(): t
 ' Get the number of defined windows
-    DEBUG("[win] ", udec_(_nr_win), " windows")
+    DEBUG("[gui.window] ", udec_(_nr_win), " windows")
     return _nr_win
 
 
@@ -166,8 +166,8 @@ pub obj_attach(^window_s win, p_obj, x=-1, y=-1): n | ^widget_s wp, ex, ey
         [wp] := p_obj
         wp.parent := [win]
         wp.p_disp := win.widget.p_disp
-        DEBUG("[win] obj_attach: obj type ", zstr_(lookup(wp.type: @"TYPE_WINDOW", @"TYPE_BUTTON", @"TYPE_TEXTLABEL", @"TYPE_PROGRESSBAR") ), " w=", udec_(wp.w) )
-        DEBUG("[win] obj_attach: cursor before ", udec_(win.container.cursor.x), udec_(win.container.cursor.y) )
+        DEBUG("[gui.window] obj_attach: obj type ", zstr_(lookup(wp.type: @"TYPE_WINDOW", @"TYPE_BUTTON", @"TYPE_TEXTLABEL", @"TYPE_PROGRESSBAR") ), " w=", udec_(wp.w) )
+        DEBUG("[gui.window] obj_attach: cursor before ", udec_(win.container.cursor.x), udec_(win.container.cursor.y) )
 
         win.container.buffer[n] := p_obj        ' add the object's pointer
         win.container.count++
@@ -217,18 +217,18 @@ pub obj_attach(^window_s win, p_obj, x=-1, y=-1): n | ^widget_s wp, ex, ey
         win.container.cursor.x += (wp.w+win.grid_x)
 
         if ( win.container.cursor.x > (win.widget.x+win.widget.w-1) )
-            DEBUG("[win] obj_attach: cursor.x=", udec_(win.container.cursor.x), "; wrapping")
+            DEBUG("[gui.window] obj_attach: cursor.x=", udec_(win.container.cursor.x), "; wrapping")
             win.container.cursor.x := win.grid_x
             win.container.cursor.y += wp.h+win.grid_y
         if ( win.container.cursor.y > (win.widget.y+win.widget.h-1) )
-            DEBUG("[win] obj_attach: cursor.y=", udec_(win.container.cursor.y), "; wrapping")
+            DEBUG("[gui.window] obj_attach: cursor.y=", udec_(win.container.cursor.y), "; wrapping")
             win.container.cursor.x := win.grid_x
             win.container.cursor.y := win.grid_y
 
-        DEBUG("[win] obj_attach: cursor after ", udec_(win.container.cursor.x), udec_(win.container.cursor.y) )
+        DEBUG("[gui.window] obj_attach: cursor after ", udec_(win.container.cursor.x), udec_(win.container.cursor.y) )
         return
 
-    DEBUG("[win] obj_attach: window ", uhex_(@win), " error: out of memory (object buffer full)")
+    DEBUG("[gui.window] obj_attach: window ", uhex_(@win), " error: out of memory (object buffer full)")
     return -1
 
 
@@ -237,11 +237,11 @@ pub fit_cursor(^window_s win, w, h)
 '   win:    pointer to window struct
 '   w, h:   dimensions of object
     if ( (win.container.cursor.x+w) > (win.widget.x+win.widget.w-1) )
-        DEBUG("[win] fit_cursor: cursor.x=", udec_(win.container.cursor.x), "; wrapping")
+        DEBUG("[gui.window] fit_cursor: cursor.x=", udec_(win.container.cursor.x), "; wrapping")
         win.container.cursor.x := win.grid_x
         win.container.cursor.y += h+win.grid_y
     if ( win.container.cursor.y > (win.widget.y+win.widget.h-1) )
-        DEBUG("[win] fit_cursor: cursor.y=", udec_(win.container.cursor.y), "; wrapping")
+        DEBUG("[gui.window] fit_cursor: cursor.y=", udec_(win.container.cursor.y), "; wrapping")
         win.container.cursor.x := win.grid_x
         win.container.cursor.y := win.grid_y
 
