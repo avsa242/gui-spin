@@ -4,7 +4,7 @@
     Description:    Progress bar GUI widget
     Author:         Jesse Burt
     Started:        Sep 5, 2026
-    Updated:        Oct 25, 2026
+    Updated:        Oct 31, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 
@@ -67,7 +67,7 @@ var
     byte            _nr_progbars
 
 
-pub create(p_parent, w=0, h=0): ^progressbar_s p | ct
+pub create(w=0, h=0): ^progressbar_s p | ct
 ' Create a progress bar object (use currently set defaults)
 '   pwin:   parent window (pointer to window_s struct)
 '   Returns:
@@ -81,16 +81,9 @@ pub create(p_parent, w=0, h=0): ^progressbar_s p | ct
             h := DEF_HEIGHT
         [p] := @prog_bar[_nr_progbars]
 
-        ct := long[p_parent][0]                 ' read container type
-        if ( ct == TYPE_WINDOW )                ' get coords from parent container
-            p.widget.p_disp := window_s[p_parent].widget.p_disp
-        elseif ( ct == TYPE_BUTTON )
-            p.widget.p_disp := button_s[p_parent].widget.p_disp
-
         p.widget.type := TYPE_PROGRESSBAR
         p.widget.w := w
         p.widget.h := h
-        p.widget.parent := p_parent
         p.widget.draw := @draw
 
         _nr_progbars++
@@ -110,6 +103,10 @@ pub draw(p_pbar=0) | ^progressbar_s pbar, ^window_s win, ^dispdrv_i disp, sx, sy
 
     [disp] := pbar.widget.p_disp                ' get the display driver interface from the parent
     [win] := pbar.widget.parent                 ' get handle on parent window
+
+    ifnot ( [disp] or [win] )
+        DEBUG("[gui.progressbar] draw(): error: no display driver or parent container defined")
+        return
 
     sx := pbar.widget.x
     sy := pbar.widget.y

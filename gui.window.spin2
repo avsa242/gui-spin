@@ -62,7 +62,7 @@ var
     byte        _nr_win
 
 
-pub create(^screen_s scr, w=0, h=0, gx=0, gy=0): ^window_s win
+pub create(w=0, h=0, gx=0, gy=0): ^window_s win
 ' Create a window
 '   dobj:       display driver object instance (pointer to object)
 '   w, h:       dimensions (optional; sets DEF_WIDTH and DEF_HEIGHT if not specified)
@@ -83,9 +83,7 @@ pub create(^screen_s scr, w=0, h=0, gx=0, gy=0): ^window_s win
         win.widget.type := TYPE_WINDOW          ' set up widget header
         win.widget.w := w
         win.widget.h := h
-        win.widget.parent := [scr]
         win.widget.draw := @draw
-        win.widget.p_disp := scr.p_disp         ' point to display driver object
 
         win.grid_x := gx                        ' set the new window's grid spacing
         win.grid_y := gy
@@ -134,6 +132,9 @@ pub draw(p_win=0) | ^window_s win, ^dispdrv_i disp, x, y
         [win] := p_win
 
     [disp] := win.widget.p_disp
+    ifnot ( [disp] )
+        DEBUG("[gui.window] draw(): error: no display driver defined")
+        return
 
     x := win.widget.x
     y := win.widget.y
@@ -163,8 +164,11 @@ pub obj_attach(^window_s win, p_obj, x=-1, y=-1): n | ^widget_s wp, ex, ey
     n := win.container.count
     if ( n < MAX_OBJECTS )
         [wp] := p_obj
+        wp.parent := [win]
+        wp.p_disp := win.widget.p_disp
         DEBUG("[win] obj_attach: obj type ", zstr_(lookup(wp.type: @"TYPE_WINDOW", @"TYPE_BUTTON", @"TYPE_TEXTLABEL", @"TYPE_PROGRESSBAR") ), " w=", udec_(wp.w) )
         DEBUG("[win] obj_attach: cursor before ", udec_(win.container.cursor.x), udec_(win.container.cursor.y) )
+
         win.container.buffer[n] := p_obj        ' add the object's pointer
         win.container.count++
 
@@ -172,6 +176,7 @@ pub obj_attach(^window_s win, p_obj, x=-1, y=-1): n | ^widget_s wp, ex, ey
             ' resize the window by the minimum to fit the child object
             win.widget.w := win.widget.w #> wp.w
             win.widget.h := win.widget.h #> wp.h
+            DEBUG("[gui.window] obj_attach(): resizing to fit widget ", udec_(win.widget.w), "x", udec_(win.widget.h))
 
         if ( (x == -1) and (y == -1) )
             ' modify the widget's position according to its layout gravity

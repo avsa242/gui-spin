@@ -65,6 +65,9 @@ pub obj_attach(^screen_s scr, p_obj, x=-1, y=-1): n | ^widget_s wp
             DEBUG("[gui.screen] obj_attach: error: type <> TYPE_WINDOW")
             return -1
 
+        wp.parent := [scr]
+        wp.p_disp := scr.p_disp
+
         if ( (x == -1) and (y == -1) )
             ' modify the widget's position according to its layout gravity
             case wp.layout_gravity

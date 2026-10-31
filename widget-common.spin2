@@ -43,7 +43,7 @@ con
     GRAV_CENTER         = GRAV_CENTER_TOP | GRAV_CENTER_BOTTOM
 
     ' flags common to all widgets
-    FLAG_GROW_TO_FIT    = 1 << 31               ' grow (resize) a widget to fit child widgets
+    FLAG_GROW_TO_FIT    = 1 << 31               ' grow (resize) a container widget to fit children
 
 
 dat

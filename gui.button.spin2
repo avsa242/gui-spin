@@ -69,7 +69,7 @@ pub border_color(^button_s btn): c
     return btn.border_color
 
 
-pub create(^window_s win, w=0, h=0): ^button_s btn
+pub create(w=0, h=0): ^button_s btn
 ' Create a button
 '   win:        parent window (pointer to window_s struct)
 '   w, h:       dimensions of button (optional; sets DEF_WIDTH and DEF_HEIGHT if not specified)
@@ -85,8 +85,6 @@ pub create(^window_s win, w=0, h=0): ^button_s btn
         btn.widget.w := w
         btn.widget.h := h
         btn.widget.type := TYPE_BUTTON
-        btn.widget.p_disp := win.widget.p_disp
-        btn.widget.parent := [win]              ' save a reference to the parent window
         btn.widget.draw := @draw
 
         btn.container.cursor.x := 0
@@ -99,11 +97,11 @@ pub create(^window_s win, w=0, h=0): ^button_s btn
         btn.container.count := 0
 
         _nr_buttons++
-        DEBUG("[button] create: x=", udec_(btn.widget.x), " y=", udec_(btn.widget.y), " w=", udec_(btn.widget.w), " h=", udec_(btn.widget.h) )
+        DEBUG("[gui.button] create: x=", udec_(btn.widget.x), " y=", udec_(btn.widget.y), " w=", udec_(btn.widget.w), " h=", udec_(btn.widget.h) )
 
         return
 
-    DEBUG("[button] create: error; out of memory")
+    DEBUG("[gui.button] create: error; out of memory")
     return 0
 
 
@@ -117,6 +115,11 @@ pub draw(p_btn=0) | ^button_s btn, ^dispdrv_i disp, ^window_s pwin, sx, sy, ex, 
 
     [disp] := btn.widget.p_disp
     [pwin] := btn.widget.parent
+
+    ifnot ( [disp] or [pwin] )
+        DEBUG("[gui.button] draw(): error: no display driver or parent window defined")
+        return
+
 
     sx := btn.widget.x
     sy := btn.widget.y
@@ -156,10 +159,14 @@ pub obj_attach(^button_s btn, p_obj, x=-1, y=-1): n | ^widget_s wp, ex, ey
         DEBUG("[button] obj_attach: type=", zstr_(lookup(wp.type: @"TYPE_WINDOW", @"TYPE_BUTTON", @"TYPE_TEXTLABEL", @"TYPE_PROGRESSBAR") ), " w=", udec_(wp.w) )
         DEBUG("[button] obj_attach: cursor before ", udec_(btn.container.cursor.x), udec_(btn.container.cursor.y) )
 
+        wp.parent := [btn]                      ' tell the child its parent container
+        wp.p_disp := btn.widget.p_disp          '   and display driver object
+
         if ( btn.widget.flags & FLAG_GROW_TO_FIT )
-            ' resize the button by the minimum to fit the child object
+            ' resize the button by the minimum amount to fit the child object
             btn.widget.w := btn.widget.w #> wp.w
             btn.widget.h := btn.widget.h #> wp.h
+            DEBUG("[gui.button] obj_attach(): resizing to fit widget ", udec_(btn.widget.w), "x", udec_(btn.widget.h))
 
         if ( (x == -1) and (y == -1) )
             ' modify the widget's position according to its layout gravity
@@ -214,6 +221,15 @@ pub obj_attach(^button_s btn, p_obj, x=-1, y=-1): n | ^widget_s wp, ex, ey
         return
 
     return -1
+
+
+pub reread_resize(^button_s btn) | i, ^widget_s wp
+' Re-read the object buffer and resize the button the minimum amount to fit objects
+'   btn:    pointer to button struct
+    repeat i from 0 to btn.container.count-1
+        [wp] := btn.container.buffer[i]
+        btn.widget.w := btn.widget.w #> wp.w
+        btn.widget.h := btn.widget.h #> wp.h
 
 
 pub set_border_color(^button_s btn, c)
