@@ -29,6 +29,20 @@ pub obj_type(^widget_s obj_w): t
     return obj_w.type
 
 
+pub set_cb_on_press(^widget_s obj_w, p_func)
+' Set a widget's callback function when touched/pressed
+'   obj_w:      pointer to widget struct
+'   p_func:     pointer to function
+    obj_w.on_press := p_func
+
+
+pub set_cb_on_release(^widget_s obj_w, p_func)
+' Set a widget's callback function when released
+'   obj_w:      pointer to widget struct
+'   p_func:     pointer to function
+    obj_w.on_release := p_func
+
+
 pub set_flags(^widget_s obj_w, f)
 ' Set a widget's flags/options
 '   obj_w:  pointer to widget struct
@@ -45,7 +59,16 @@ pub set_layout_gravity(^widget_s obj_w, g)
 
 pub set_touch_id(^widget_s obj_w, tid)
 ' Set a widget's touchscreen ID
+'   obj_w:  pointer to widget struct
+'   tid:    touch tag/ID
     obj_w.touch_id := tid
+
+
+pub set_touch_repeat(^widget_s obj_w, r)
+' Set to indicate whether touch event should repeat while widget is touched
+'   obj_w:  pointer to widget struct
+'   r:      repeat flag (0: don't repeat, other values: repeat)
+    obj_w.touch_repeat := r
 
 
 pub set_dims(^widget_s obj_w, w, h)

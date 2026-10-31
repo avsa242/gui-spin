@@ -19,8 +19,11 @@ con
         long draw, ...                          ' draw function pointer
         long flags, ...                         ' draw flags/options
         long event, ...                         ' events
+        long on_press, ...                      ' callback function pointer: on-pressed/touched
+        long on_release, ...                    ' callback function pointer: on-released
         word abs_x, abs_y, ...                  ' screen coordinates    xxx review: needed?
         word x, y, w, h, ...                    ' position, dimensions
+        byte touch_repeat, ...                  ' repeat event while touched
         byte touch_id, ...                      ' touchscreen/tag ID
         byte layout_gravity)                    ' preferred position within parent container
 
