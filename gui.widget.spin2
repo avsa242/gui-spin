@@ -93,14 +93,21 @@ pub set_widget_y(^widget_s obj_w, y)
     obj_w.y := y
 
 
-pub widget_area(^widget_s obj_w): sx, sy, ex, ey
+pub widget_area(^widget_s obj_w, pr=false): sx, sy, ex, ey | ^widget_s pwid
 ' Get the area occupied by a widget
 '   obj_w:      pointer to widget struct
 '   Returns:    starting and ending coordinates (4 longs)
-    sx := obj_w.x
-    sy := obj_w.y
-    ex := obj_w.w-1
-    ey := obj_w.h-1
+    if ( pr )
+        [pwid] := obj_w.parent
+        sx := pwid.x+obj_w.x
+        sy := pwid.y+obj_w.y
+        ex := sx + obj_w.w-1
+        ey := sy + obj_w.h-1
+    else
+        sx := obj_w.x
+        sy := obj_w.y
+        ex := obj_w.w-1
+        ey := obj_w.h-1
 
 
 pub width(^widget_s obj_w): w

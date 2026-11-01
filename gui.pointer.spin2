@@ -86,7 +86,7 @@ pub tag_object(^widget_s p_obj): id | ^pointer_i pointer
     [pointer] := pdrv
 
     _tag_ptr[id] := @p_obj
-    pointer.tag_area(id, widget.widget_area(@p_obj) )
+    pointer.tag_area(id, widget.widget_area(@p_obj, true) )
     widget.set_touch_id(@p_obj, id)
     _next_tag_id++
     DEBUG("[gui.pointer] tag_object() ", uhex_(_tag_ptr[id]), " id ", udec_(id) )
