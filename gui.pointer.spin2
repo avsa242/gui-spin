@@ -4,7 +4,7 @@
     Description:    GUI pointer/touchscreen ID management
     Author:         Jesse Burt
     Started:        Oct 12, 2026
-    Updated:        Oct 12, 2026
+    Updated:        Nov 1, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -59,6 +59,13 @@ pub clear_tag_id(id): s | ^pointer_i pointer
     return -1
 
 
+pub tag_pointer(t): p
+' Get the widget pointer associated with a tag
+'   t:          tag ID
+'   Returns:    pointer to widget_s
+    return _tag_ptr[t]
+
+
 pub set_pointer_driver(^pointer_i p)
 ' Set pointer to the pointing device/touchscreen driver object
 '   p:  pointer to pointing device driver object
@@ -82,7 +89,7 @@ pub tag_object(^widget_s p_obj): id | ^pointer_i pointer
     pointer.tag_area(id, widget.widget_area(@p_obj) )
     widget.set_touch_id(@p_obj, id)
     _next_tag_id++
-    
+    DEBUG("[gui.pointer] tag_object() ", uhex_(_tag_ptr[id]), " id ", udec_(id) )
     return id   
 
 
