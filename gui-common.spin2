@@ -7,16 +7,19 @@ con
         pub fgcolor(c)
         pub font_height(ch, fidx): h
         pub font_width(ch, fidx): w
+        pub hgradient(x, y, w, h, c0, c1)
         pub hline(y, xs, len, c)
         pub line(x1, y1, x2, y2, c)
         pub newline()
         pub plot(x, y, c)
         pub pos_xy(x, y)
         pub puts(p_str)
+        pub rgb32_rgb16(rgb32): rgb16
         pub set_clip_rect(sx, sy, ex, ey)
         pub set_font(i)
         pub show_context()
         pub str_width(p_str, fidx): w
+        pub vgradient(x, y, w, h, c0, c1)
         pub vline(x, ys, len, c)
     )
 

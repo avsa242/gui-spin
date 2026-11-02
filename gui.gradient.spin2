@@ -1,0 +1,128 @@
+{
+----------------------------------------------------------------------------------------------------
+    Filename:       gui.gradient.spin2
+    Description:    GUI widget: gradient
+    Author:         Jesse Burt
+    Started:        Nov 1, 2026
+    Updated:        Nov 2, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
+}
+
+{Spin2_v45}
+
+
+#include "widget-common.spin2"
+#include "gui-common.spin2"
+
+con
+
+    WIDGET_TYPE         = TYPE_GRADIENT
+
+    MAX_GRADIENTS       = 1
+
+    ' option flags
+    FLAG_GRAD_VERTICAL  = 1 << 0
+    FLAG_GRAD_HORIZONTAL= 1 << 1
+
+    ' default settings
+    DEF_WIDTH           = 2
+    DEF_HEIGHT          = 2
+    DEF_FLAGS           = 0
+
+
+con
+
+    struct gradient_s(...
+        widget_s widget, ...
+        long color0, ...
+        long color1)
+
+
+var
+
+    gradient_s  gradient[MAX_GRADIENTS]
+    byte        _nr_gradients
+
+
+pub create(w=0, h=0): ^gradient_s grad
+' Create a gradient object
+'   w, h:   dimensions (optional; default is to use dimensions defined at build-time)
+    if ( _nr_gradients < MAX_GRADIENTS )
+        if ( w < 1 )
+            w := DEF_WIDTH
+        if ( h < 1 )
+            h := DEF_HEIGHT
+
+        [grad] := @gradient[_nr_gradients]
+        grad.widget.w := w
+        grad.widget.h := h
+        grad.widget.type := TYPE_GRADIENT
+        grad.widget.draw := @draw
+
+        _nr_gradients++
+        DEBUG("[gui.gradient] create(): ", uhex_([grad]), " x=", udec_(grad.widget.x), " y=", udec_(grad.widget.y), " w=", udec_(grad.widget.w), " h=", udec_(grad.widget.h) )
+        return
+
+    DEBUG("[gui.gradient] create: error; out of memory")
+    return 0
+
+
+pub draw(p_grad=0) | ^gradient_s grad, ^dispdrv_i disp
+' Draw a gradient
+'   p_grad:     pointer to gradient struct
+    ifnot ( p_grad )
+        [grad] := %self
+    else
+        [grad] := p_grad
+
+    [disp] := grad.widget.p_disp
+
+    ifnot ( [disp] )
+        DEBUG("[gui.gradient] draw(): error: no display driver defined")
+        return
+
+    if ( grad.widget.flags & FLAG_GRAD_VERTICAL )
+        disp.vgradient( grad.widget.x, grad.widget.y, ...
+                        grad.widget.w, grad.widget.h, ...
+                        grad.color0, grad.color1)
+    elseif ( grad.widget.flags & FLAG_GRAD_HORIZONTAL )
+        disp.hgradient( grad.widget.x, grad.widget.y, ...
+                        grad.widget.w, grad.widget.h, ...
+                        grad.color0, grad.color1)
+
+
+pub set_color0(^gradient_s grad, c)
+' Set first color of a gradient
+'   grad:   pointer to gradient struct
+'   c:      color
+    grad.color0 := c
+
+
+pub set_color1(^gradient_s grad, c)
+' Set second color of a gradient
+'   grad:   pointer to gradient struct
+'   c:      color
+    grad.color1 := c
+
+
+dat
+{
+Copyright 2026 Jesse Burt
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+}
+
