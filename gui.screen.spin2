@@ -56,7 +56,7 @@ pub create(^dispdrv_i disp, p_setup): i
     return 0
 
 
-pub obj_attach(^screen_s scr, p_obj, x=-1, y=-1): n | ^widget_s wp
+pub obj_attach(^screen_s scr, p_obj, x=-1, y=-1): n | ^widget_s child
 ' Attach a window to a screen's object buffer
 '   src:        pointer to screen struct to attach window to
 '   p_obj:      pointer to object (window) struct
@@ -67,62 +67,63 @@ pub obj_attach(^screen_s scr, p_obj, x=-1, y=-1): n | ^widget_s wp
 
     n := scr.container.count
     if ( n < MAX_OBJECTS )
-        [wp] := p_obj
-        if ( wp.type <> TYPE_WINDOW )
+        [child] := p_obj
+        if ( child.type <> TYPE_WINDOW )
             DEBUG("[gui.screen] obj_attach: error: type <> TYPE_WINDOW")
             return -1
 
-        wp.parent := [scr]
-        wp.p_disp := scr.p_disp
+        child.parent := [scr]
+        child.p_disp := scr.p_disp
 
         ' handle positioning of widget:
-        if ( (x == -1) and (y == -1) )
-            ' position not explicitly specified, so modify the widget's position
-            '   according to its layout gravity
-            case wp.layout_gravity
-                GRAV_UPPER_LEFT:
-                    wp.x := 0
-                    wp.y := 0
-                GRAV_CENTER_TOP:
-                    wp.x := (scr.width/2)-(wp.w/2)
-                GRAV_UPPER_RIGHT:
-                    wp.x := scr.width-wp.w
-                GRAV_CENTER_RIGHT:
-                    wp.x := scr.width-wp.w
-                    wp.y := (scr.height/2)-(wp.h/2)
-                GRAV_LOWER_RIGHT:
-                    wp.x := scr.width-wp.w
-                    wp.y := scr.height-wp.h
-                GRAV_CENTER_BOTTOM:
-                    wp.x := (scr.width/2)-(wp.w/2)
-                    wp.y := scr.height-wp.h
-                GRAV_LOWER_LEFT:
-                    wp.y := scr.height-wp.h
-                GRAV_CENTER_LEFT:
-                    wp.y := (scr.height/2)-(wp.h/2)
-                GRAV_CENTER:
-                    wp.x := (scr.width/2)-(wp.w/2)
-                    wp.y := (scr.height/2)-(wp.h/2)
-                other:
-                    ' no gravity setting; use the cursor position
-                    wp.x := scr.container.cursor.x
-                    wp.y := scr.container.cursor.y
-        else
-            ' position was specified, so manually place it
-            wp.x := x
-            wp.y := y
+        ifnot ( child.flags & FLAG_DONT_CHANGE_POS )
+            if ( (x == -1) and (y == -1) )
+                ' position not explicitly specified, so modify the widget's position
+                '   according to its layout gravity
+                case child.layout_gravity
+                    GRAV_UPPER_LEFT:
+                        child.x := 0
+                        child.y := 0
+                    GRAV_CENTER_TOP:
+                        child.x := (scr.width/2)-(child.w/2)
+                    GRAV_UPPER_RIGHT:
+                        child.x := scr.width-child.w
+                    GRAV_CENTER_RIGHT:
+                        child.x := scr.width-child.w
+                        child.y := (scr.height/2)-(child.h/2)
+                    GRAV_LOWER_RIGHT:
+                        child.x := scr.width-child.w
+                        child.y := scr.height-child.h
+                    GRAV_CENTER_BOTTOM:
+                        child.x := (scr.width/2)-(child.w/2)
+                        child.y := scr.height-child.h
+                    GRAV_LOWER_LEFT:
+                        child.y := scr.height-child.h
+                    GRAV_CENTER_LEFT:
+                        child.y := (scr.height/2)-(child.h/2)
+                    GRAV_CENTER:
+                        child.x := (scr.width/2)-(child.w/2)
+                        child.y := (scr.height/2)-(child.h/2)
+                    other:
+                        ' no gravity setting; use the cursor position
+                        child.x := scr.container.cursor.x
+                        child.y := scr.container.cursor.y
+            else
+                ' position was specified, so manually place it
+                child.x := x
+                child.y := y
 
         DEBUG("[gui.screen] obj_attach: cursor before ", udec_(scr.container.cursor.x), udec_(scr.container.cursor.y) )
         scr.container.buffer[n] := p_obj        ' add the object's pointer
         scr.container.count++
 
         ' move the window cursor by the size of the obj, wrapping around to the left (or top)
-        scr.container.cursor.x += (wp.w+scr.grid_x)
+        scr.container.cursor.x += (child.w+scr.grid_x)
 
         if ( scr.container.cursor.x > (scr.width-1) )
             DEBUG("[gui.screen] obj_attach: cursor.x=", udec_(scr.container.cursor.x), "; wrapping")
             scr.container.cursor.x := scr.grid_x
-            scr.container.cursor.y += wp.h+scr.grid_y
+            scr.container.cursor.y += child.h+scr.grid_y
         if ( scr.container.cursor.y > (scr.height-1) )
             DEBUG("[gui.screen] obj_attach: cursor.y=", udec_(scr.container.cursor.y), "; wrapping")
             scr.container.cursor.x := scr.grid_x

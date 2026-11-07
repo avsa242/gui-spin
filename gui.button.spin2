@@ -145,7 +145,7 @@ pub fill_color(^button_s btn): c
     return btn.fill_color
 
 
-pub obj_attach(^button_s btn, p_obj, x=-1, y=-1): n | ^widget_s wp, ex, ey
+pub obj_attach(^button_s btn, p_obj, x=-1, y=-1): n | ^widget_s child, ex, ey
 ' Attach a GUI object to a button's tree
 '   btn:        pointer to button struct to attach object to
 '   p_obj:      pointer to object struct
@@ -155,61 +155,62 @@ pub obj_attach(^button_s btn, p_obj, x=-1, y=-1): n | ^widget_s wp, ex, ey
 '               -1 on failure (object array is full)
     n := btn.container.count
     if ( n < MAX_OBJECTS )
-        [wp] := p_obj
-        DEBUG("[gui.button] obj_attach: type=", zstr_(lookup(wp.type: @"TYPE_WINDOW", @"TYPE_BUTTON", @"TYPE_TEXTLABEL", @"TYPE_PROGRESSBAR") ), " w=", udec_(wp.w) )
+        [child] := p_obj
+        DEBUG("[gui.button] obj_attach: type=", zstr_(lookup(child.type: @"TYPE_WINDOW", @"TYPE_BUTTON", @"TYPE_TEXTLABEL", @"TYPE_PROGRESSBAR") ), " w=", udec_(child.w) )
         DEBUG("[gui.button] obj_attach: cursor before ", udec_(btn.container.cursor.x), udec_(btn.container.cursor.y) )
 
-        wp.parent := [btn]                      ' tell the child its parent container
-        wp.p_disp := btn.widget.p_disp          '   and display driver object
+        child.parent := [btn]                      ' tell the child its parent container
+        child.p_disp := btn.widget.p_disp          '   and display driver object
 
         if ( btn.widget.flags & FLAG_GROW_TO_FIT )
             ' resize the button by the minimum amount to fit the child object
-            btn.widget.w := btn.widget.w #> wp.w
-            btn.widget.h := btn.widget.h #> wp.h
+            btn.widget.w := btn.widget.w #> child.w
+            btn.widget.h := btn.widget.h #> child.h
             DEBUG("[gui.button] obj_attach(): resizing to fit widget ", udec_(btn.widget.w), "x", udec_(btn.widget.h))
 
-        if ( (x == -1) and (y == -1) )
-            ' modify the widget's position according to its layout gravity
-            case wp.layout_gravity
-                GRAV_UPPER_LEFT:
-                    wp.x := 0
-                    wp.y := 0
-                GRAV_CENTER_TOP:
-                    wp.x := (btn.widget.w/2)-(wp.w/2)
-                GRAV_UPPER_RIGHT:
-                    wp.x := btn.widget.w-wp.w
-                GRAV_CENTER_RIGHT:
-                    wp.x := btn.widget.w-wp.w
-                    wp.y := (btn.widget.h/2)-(wp.h/2)
-                GRAV_LOWER_RIGHT:
-                    wp.x := btn.widget.w-wp.w
-                    wp.y := btn.widget.h-wp.h
-                GRAV_CENTER_BOTTOM:
-                    wp.x := (btn.widget.w/2)-(wp.w/2)
-                    wp.y := btn.widget.h-wp.h
-                GRAV_LOWER_LEFT:
-                    wp.y := btn.widget.h-wp.h
-                GRAV_CENTER_LEFT:
-                    wp.y := (btn.widget.h/2)-(wp.h/2)
-                GRAV_CENTER:
-                    wp.x := (btn.widget.w/2)-(wp.w/2)
-                    wp.y := (btn.widget.h/2)-(wp.h/2)
-                other:
-                    ' no gravity setting; use the cursor position
-                    wp.x := btn.container.cursor.x
-                    wp.y := btn.container.cursor.y
-        else
-            ' manually place
-            wp.x := x
-            wp.y := y
+        ifnot ( child.flags & FLAG_DONT_CHANGE_POS )
+            if ( (x == -1) and (y == -1) )
+                ' modify the widget's position according to its layout gravity
+                case child.layout_gravity
+                    GRAV_UPPER_LEFT:
+                        child.x := 0
+                        child.y := 0
+                    GRAV_CENTER_TOP:
+                        child.x := (btn.widget.w/2)-(child.w/2)
+                    GRAV_UPPER_RIGHT:
+                        child.x := btn.widget.w-child.w
+                    GRAV_CENTER_RIGHT:
+                        child.x := btn.widget.w-child.w
+                        child.y := (btn.widget.h/2)-(child.h/2)
+                    GRAV_LOWER_RIGHT:
+                        child.x := btn.widget.w-child.w
+                        child.y := btn.widget.h-child.h
+                    GRAV_CENTER_BOTTOM:
+                        child.x := (btn.widget.w/2)-(child.w/2)
+                        child.y := btn.widget.h-child.h
+                    GRAV_LOWER_LEFT:
+                        child.y := btn.widget.h-child.h
+                    GRAV_CENTER_LEFT:
+                        child.y := (btn.widget.h/2)-(child.h/2)
+                    GRAV_CENTER:
+                        child.x := (btn.widget.w/2)-(child.w/2)
+                        child.y := (btn.widget.h/2)-(child.h/2)
+                    other:
+                        ' no gravity setting; use the cursor position
+                        child.x := btn.container.cursor.x
+                        child.y := btn.container.cursor.y
+            else
+                ' manually place
+                child.x := x
+                child.y := y
 
         ' move the container cursor by the size of the object,
         '   wrapping around to the left/top if needed
-        btn.container.cursor.x += wp.w
+        btn.container.cursor.x += child.w
         if ( btn.container.cursor.x > (btn.widget.x+btn.widget.w-1) )
             DEBUG("[gui.button] obj_attach: cursor.x=", udec_(btn.container.cursor.x), "; wrapping")
             btn.container.cursor.x := 0
-            btn.container.cursor.y += wp.h
+            btn.container.cursor.y += child.h
             if ( btn.container.cursor.y > (btn.widget.y+btn.widget.h-1) )
                 DEBUG("[gui.button] obj_attach: cursor.y=", udec_(button.container.cursor.y), "; wrapping")
                 btn.container.cursor.y := 0

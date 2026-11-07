@@ -178,40 +178,41 @@ pub obj_attach(^window_s win, p_obj, x=-1, y=-1): n | ^widget_s child, ex, ey
             win.widget.h := win.widget.h #> child.h
             DEBUG("[gui.window] obj_attach(): resizing to fit widget ", udec_(win.widget.w), "x", udec_(win.widget.h))
 
-        if ( (x == -1) and (y == -1) )
-            ' modify the widget's position according to its layout gravity
-            case child.layout_gravity
-                GRAV_UPPER_LEFT:
-                    child.x := win.grid_x
-                    child.y := win.grid_y
-                GRAV_CENTER_TOP:
-                    child.x := (win.widget.w/2)-(child.w/2)
-                GRAV_UPPER_RIGHT:
-                    child.x := win.widget.w-win.grid_x-child.w
-                GRAV_CENTER_RIGHT:
-                    child.x := win.widget.w-win.grid_x-child.w
-                    child.y := (win.widget.h/2)-(child.h/2)
-                GRAV_LOWER_RIGHT:
-                    child.x := win.widget.w-win.grid_x-child.w
-                    child.y := win.widget.h-win.grid_y-child.h
-                GRAV_CENTER_BOTTOM:
-                    child.x := (win.widget.w/2)-(child.w/2)
-                    child.y := win.widget.h-win.grid_y-child.h
-                GRAV_LOWER_LEFT:
-                    child.y := win.widget.h-win.grid_y-child.h
-                GRAV_CENTER_LEFT:
-                    child.y := (win.widget.h/2)-(child.h/2)
-                GRAV_CENTER:
-                    child.x := (win.widget.w/2)-(child.w/2)
-                    child.y := (win.widget.h/2)-(child.h/2)
-                other:
-                    ' no gravity setting; use the cursor position
-                    child.x := win.container.cursor.x
-                    child.y := win.container.cursor.y
-        else
-            ' manually place
-            child.x := x
-            child.y := y
+        ifnot ( child.flags & FLAG_DONT_CHANGE_POS )
+            if ( (x == -1) and (y == -1) )
+                ' modify the widget's position according to its layout gravity
+                case child.layout_gravity
+                    GRAV_UPPER_LEFT:
+                        child.x := win.grid_x
+                        child.y := win.grid_y
+                    GRAV_CENTER_TOP:
+                        child.x := (win.widget.w/2)-(child.w/2)
+                    GRAV_UPPER_RIGHT:
+                        child.x := win.widget.w-win.grid_x-child.w
+                    GRAV_CENTER_RIGHT:
+                        child.x := win.widget.w-win.grid_x-child.w
+                        child.y := (win.widget.h/2)-(child.h/2)
+                    GRAV_LOWER_RIGHT:
+                        child.x := win.widget.w-win.grid_x-child.w
+                        child.y := win.widget.h-win.grid_y-child.h
+                    GRAV_CENTER_BOTTOM:
+                        child.x := (win.widget.w/2)-(child.w/2)
+                        child.y := win.widget.h-win.grid_y-child.h
+                    GRAV_LOWER_LEFT:
+                        child.y := win.widget.h-win.grid_y-child.h
+                    GRAV_CENTER_LEFT:
+                        child.y := (win.widget.h/2)-(child.h/2)
+                    GRAV_CENTER:
+                        child.x := (win.widget.w/2)-(child.w/2)
+                        child.y := (win.widget.h/2)-(child.h/2)
+                    other:
+                        ' no gravity setting; use the cursor position
+                        child.x := win.container.cursor.x
+                        child.y := win.container.cursor.y
+            else
+                ' manually place
+                child.x := x
+                child.y := y
 
         ' move the window cursor by the size of the obj, wrapping around to the left (or top)
         win.container.cursor.x += (child.w+win.grid_x)
