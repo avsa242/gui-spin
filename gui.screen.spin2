@@ -4,7 +4,7 @@
     Description:    GUI screen setup/container
     Author:         Jesse Burt
     Started:        Oct 18, 2026
-    Updated:        Oct 25, 2026
+    Updated:        Nov 7, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -35,18 +35,25 @@ con
 var
 
     screen_s    screen[MAX_SCREENS]
+    byte        _nr_screens
 
 
 pub create(^dispdrv_i disp, p_setup): i
 
-    screen.p_disp := [disp]
-    screen.width := word[p_setup+8]
-    screen.height := word[p_setup+10]
-    longfill(@screen.container.buffer, 0, MAX_OBJECTS)
-    screen.container.count := 0
+    if ( _nr_screens < MAX_SCREENS )
+        i := @screen[_nr_screens]
+        screen[_nr_screens].p_disp := [disp]
+        screen[_nr_screens].width := word[p_setup+8]
+        screen[_nr_screens].height := word[p_setup+10]
+        longfill(@screen[_nr_screens].container.buffer, 0, MAX_OBJECTS)
+        screen[_nr_screens].container.count := 0
 
-    DEBUG("[gui.screen] create() screen size ", udec_(screen.width), "x", udec_(screen.height))
-    return @screen[0]
+        DEBUG("[gui.screen] create() screen size ", udec_(screen.width), "x", udec_(screen.height))
+        _nr_screens++
+        return
+
+    DEBUG("[gui.screen] create(): error: out of memory")
+    return 0
 
 
 pub obj_attach(^screen_s scr, p_obj, x=-1, y=-1): n | ^widget_s wp
@@ -58,7 +65,7 @@ pub obj_attach(^screen_s scr, p_obj, x=-1, y=-1): n | ^widget_s wp
 '   Returns:    index in object tree array on success
 '               -1 on failure (object array is full)
 
-    n := screen.container.count
+    n := scr.container.count
     if ( n < MAX_OBJECTS )
         [wp] := p_obj
         if ( wp.type <> TYPE_WINDOW )
@@ -68,8 +75,10 @@ pub obj_attach(^screen_s scr, p_obj, x=-1, y=-1): n | ^widget_s wp
         wp.parent := [scr]
         wp.p_disp := scr.p_disp
 
+        ' handle positioning of widget:
         if ( (x == -1) and (y == -1) )
-            ' modify the widget's position according to its layout gravity
+            ' position not explicitly specified, so modify the widget's position
+            '   according to its layout gravity
             case wp.layout_gravity
                 GRAV_UPPER_LEFT:
                     wp.x := 0
@@ -99,30 +108,30 @@ pub obj_attach(^screen_s scr, p_obj, x=-1, y=-1): n | ^widget_s wp
                     wp.x := scr.container.cursor.x
                     wp.y := scr.container.cursor.y
         else
-            ' manually place
+            ' position was specified, so manually place it
             wp.x := x
             wp.y := y
 
-        DEBUG("[gui.screen] obj_attach: cursor before ", udec_(screen.container.cursor.x), udec_(screen.container.cursor.y) )
-        screen.container.buffer[n] := p_obj        ' add the object's pointer
-        screen.container.count++
+        DEBUG("[gui.screen] obj_attach: cursor before ", udec_(scr.container.cursor.x), udec_(scr.container.cursor.y) )
+        scr.container.buffer[n] := p_obj        ' add the object's pointer
+        scr.container.count++
 
         ' move the window cursor by the size of the obj, wrapping around to the left (or top)
-        screen.container.cursor.x += (wp.w+screen.grid_x)
+        scr.container.cursor.x += (wp.w+scr.grid_x)
 
-        if ( screen.container.cursor.x > (screen.width-1) )
-            DEBUG("[gui.screen] obj_attach: cursor.x=", udec_(screen.container.cursor.x), "; wrapping")
-            screen.container.cursor.x := screen.grid_x
-            screen.container.cursor.y += wp.h+screen.grid_y
-        if ( screen.container.cursor.y > (screen.height-1) )
-            DEBUG("[gui.screen] obj_attach: cursor.y=", udec_(screen.container.cursor.y), "; wrapping")
-            screen.container.cursor.x := screen.grid_x
-            screen.container.cursor.y := screen.grid_y
+        if ( scr.container.cursor.x > (scr.width-1) )
+            DEBUG("[gui.screen] obj_attach: cursor.x=", udec_(scr.container.cursor.x), "; wrapping")
+            scr.container.cursor.x := scr.grid_x
+            scr.container.cursor.y += wp.h+scr.grid_y
+        if ( scr.container.cursor.y > (scr.height-1) )
+            DEBUG("[gui.screen] obj_attach: cursor.y=", udec_(scr.container.cursor.y), "; wrapping")
+            scr.container.cursor.x := scr.grid_x
+            scr.container.cursor.y := scr.grid_y
 
-        DEBUG("[gui.screen] obj_attach ", udec_(n), ": cursor after ", udec_(screen.container.cursor.x), udec_(screen.container.cursor.y) )
+        DEBUG("[gui.screen] obj_attach ", udec_(n), ": cursor after ", udec_(scr.container.cursor.x), udec_(scr.container.cursor.y) )
         return
 
-    DEBUG("[gui.screen] obj_attach: screen ", uhex_(@screen), " error: out of memory (object buffer full)")
+    DEBUG("[gui.screen] obj_attach: screen ", uhex_(@scr), " error: out of memory (object buffer full)")
     return -1
 
 
