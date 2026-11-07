@@ -4,38 +4,72 @@
     Description:    Digital waveform (high/low) plot
     Author:         Jesse Burt
     Started:        Aug 1, 2026
-    Updated:        Sep 8, 2026
+    Updated:        Nov 7, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 {Spin2_v45}
 
-#include "gui.common.spin2"                     ' define display driver API req's, etc
+#include "widget-common.spin2"
+#include "gui-common.spin2"
+
 
 con
 
+    WIDGET_TYPE         = TYPE_DIGI_PLOT
+
     ' limits
-    MAX_DIGI_PLOTS  = 4
+    MAX_DIGI_PLOTS      = 1
+
+
+    ' option flags
+    FLAG_DRAW_OUTLINE   = 1 << 0
+    FLAG_DRAW_FILL      = 1 << 1
+
+
+    ' default settings
+    DEF_WIDTH           = 2
+    DEF_HEIGHT          = 2
+    DEF_BORDER_COLOR    = 1
+    DEF_FILL_COLOR      = 0
+    DEF_PLOT_COLOR      = 1
+    DEF_X_ZOOM          = 0_000050
+    DEF_INVERT_Y        = false
+    DEF_FLAGS           = FLAG_DRAW_OUTLINE | FLAG_DRAW_FILL
+
+
+obj
+
+    slicer: "dsp.byte-slicer"
+    window: "gui.window"
+
+
+con
+
+    struct window_s = window.window_s
 
     ' sample record
     struct sample_s(...
         long state, ...
         long duration)
 
-
-obj
-
-    slicer: "dsp.byte-slicer"
+    struct digi_plot_s(...
+        widget_s widget, ...
+        long plot_color, ...
+        long fill_color, ...
+        long border_color, ...
+        long x_zoom, ...
+        long p_plot, ...
+        byte invert_y)
 
 
 var
 
     digi_plot_s digi_plot[MAX_DIGI_PLOTS]
-    digi_plot_s defaults
     byte        _nr_digi_plots
 
 
-pub create(^window_s pwin): ^digi_plot_s i | ^widget_s wp
+pub create(p_plot, w=0, h=0): ^digi_plot_s plot
 ' Create a digital waveform plot object (use currently set defaults)
 '   pwin:   parent window (pointer to window_s struct)
 '   Returns:
@@ -43,69 +77,34 @@ pub create(^window_s pwin): ^digi_plot_s i | ^widget_s wp
 '           0 on failure (exceeded parent window's maximum number of objects,
 '                           or this object's maximum number of plots)
 
-    if ( (pwin.nr_obj < MAX_WIN_OBJS ) and (_nr_digi_plots < MAX_DIGI_PLOTS) )
-        [i] := @digi_plot[_nr_digi_plots]
-        [wp] := @digi_plot[_nr_digi_plots].widget
+    if ( _nr_digi_plots < MAX_DIGI_PLOTS )
+        if ( w < 1 )
+            w := DEF_WIDTH
+        if ( h < 1 )
+            h := DEF_HEIGHT
 
-        ' use the currently set defaults as a template for the new button
-        bytemove(@i, @defaults, sizeof(digi_plot_s) )
-        set_type(@wp,       OBJ_DIGI_PLOT)
-        set_parent_obj(@wp, @pwin)
-        set_x_zoom(@i,      0_001000)           ' default to 0.001x zoom
-        set_plot_color(@i,  pwin.widget.fgcolor)' inherit plot color from parent's foreground color
+        [plot] := @digi_plot[_nr_digi_plots]
+        plot.widget.w := w
+        plot.widget.h := h
+        plot.widget.type := TYPE_DIGI_PLOT
+        plot.widget.draw := @draw
+        plot.widget.flags := DEF_FLAGS
 
-        ' check if the plot will fit at the current window cursor
-        if ( ((pwin.cursor.x + wp.w) < (pwin.widget.x+pwin.widget.w-1)) and ...
-             ((pwin.cursor.y + wp.h) < (pwin.widget.y+pwin.widget.h-1)) )
-            set_posxy(@wp,       pwin.cursor.x, pwin.cursor.y)
+        plot.plot_color := DEF_PLOT_COLOR
+        plot.fill_color := DEF_FILL_COLOR
+        plot.border_color := DEF_BORDER_COLOR
+        plot.x_zoom := DEF_X_ZOOM
+        plot.invert_y := DEF_INVERT_Y
 
-            ' move the window's cursor for the next object
-            pwin.cursor.x += wp.w+pwin.grid_spacing_x
-            if ( pwin.cursor.x > (pwin.widget.x+pwin.widget.w-1) )
-                pwin.cursor.x := (pwin.widget.x+pwin.grid_spacing_x)
-                pwin.cursor.y += wp.h+pwin.grid_spacing_y
-            if ( pwin.cursor.y > (pwin.widget.y+pwin.widget.h-1) )
-                pwin.cursor.y := pwin.widget.y
+        plot.p_plot := p_plot
 
-        pwin.object[pwin.nr_obj] := @i
-        pwin.nr_obj++
         _nr_digi_plots++
         return
 
     return 0
 
 
-pub create_explicit(^window_s pwin, x, y, w, h): ^digi_plot_s i | ^widget_s wp
-' Create a digital waveform plot object (set parameters explicitly)
-'   pwin:   parent window (pointer to window_s struct)
-'   x, y:   plot upper-left position (pixels)
-'   w, h:   plot dimensions (pixels)
-'   Returns:
-'           plot handle on success (pointer)
-'           0 on failure (exceeded parent window's maximum number of obects,
-'                           or this object's maximum number of plots)
-    if ( (pwin.nr_obj < MAX_WIN_OBJS ) and (_nr_digi_plots < MAX_DIGI_PLOTS) )
-        [i] := @digi_plot[_nr_digi_plots]
-        [wp] := @digi_plot[_nr_digi_plots].widget
-
-        set_type(@wp,       OBJ_DIGI_PLOT)
-        set_parent_obj(@wp, @pwin)
-        set_posxy(@wp,      x, y)
-        set_dims(@wp,       w, h)
-        set_bgcolor(@wp,    pwin.widget.bgcolor)' inherit widget colors from parent
-        set_fgcolor(@wp,    pwin.widget.fgcolor)
-        set_x_zoom(@i,      0_001000)           ' default to 0.001x zoom
-        set_plot_color(@i,  pwin.widget.fgcolor)' inherit plot color from parent's foreground color
-
-        pwin.object[pwin.nr_obj] := @i
-        pwin.nr_obj++
-        _nr_digi_plots++
-        return
-
-    return 0
-
-
-pub destroy(^digi_plot_s plot): s
+pub destroy(^digi_plot_s plot): s   'xxx this doesn't handle gaps in the array
 ' Destroy a digi-plot object
 '   plot:       digi-plot (pointer to digi_plot_s struct)
 '   Returns:    number of plots before destruction
@@ -119,18 +118,23 @@ pub destroy(^digi_plot_s plot): s
     return false
 
 
-pub draw(^digi_plot_s plot) | ^window_s win, le, te, re, be, cx, y, py, s, dur_s, ls, ^dispdrv_i disp, ^slicer.capture_s cap
+pub draw(p_plot=0) | ^digi_plot_s plot, ^window_s win, le, te, re, be, cx, y, py, s, dur_s, ls, ^dispdrv_i disp, ^slicer.capture_s cap
 ' Draw a digital waveform plot to a window
 '   plot:   pointer to threshold plot config
 '   NOTE: The window being drawn to MUST have a display driver defined first
 '   NOTE: The position drawn will be relative to the window the plot is drawn to.
-    [win] := plot.widget.parent                 ' get handle on parent window
-    [disp] := win.p_disp                        ' inherit display driver from window
+    ifnot ( p_plot )
+        [plot] := %self
+    else
+        [plot] := p_plot
+
+    [disp] := plot.widget.p_disp
+    [win] := plot.widget.parent
     [cap] := plot.p_plot
 
     ' get base coordinates from the window we're drawing to
-    te := win.widget.y + plot.widget.y        ' pre-calc top edge
-    le := win.widget.x + plot.widget.x        ' pre-calc left edge
+    te := plot.widget.y                         ' pre-calc top edge
+    le := plot.widget.x                         ' pre-calc left edge
     re := le + plot.widget.w-1                  ' pre-calc right edge
     be := te + plot.widget.h-1                  ' pre-calc bottom edge
 
@@ -139,7 +143,8 @@ pub draw(^digi_plot_s plot) | ^window_s win, le, te, re, be, cx, y, py, s, dur_s
     s := 0
     ls := cap.record[s].state
 
-    disp.box(le, te, re, be, plot.widget.bgcolor, true)     ' clear plot area
+    if ( plot.widget.flags & FLAG_DRAW_FILL )
+        disp.box(le, te, re, be, plot.fill_color, true)     ' clear plot area
 
     repeat while (cx < re)                      ' plot until the right edge is reached
         py := te + ( (cap.record[s].state ^ plot.invert_y) * (plot.widget.h-1))
@@ -153,37 +158,6 @@ pub draw(^digi_plot_s plot) | ^window_s win, le, te, re, be, cx, y, py, s, dur_s
         ls := cap.record[s].state               ' remember state for next transition
         s++                                     ' next sample
         if ( s >= cap.len )
-            return
-
-
-pub draw_to_disp(^dispdrv_i disp, ^digi_plot_s plot, ^sample_s sample, slen) | re, be, x, y, py, s, dur_s, ls
-' Draw a digital waveform plot (windowless)
-'   disp:   pointer to display driver object
-'   plot:   pointer to threshold plot config
-'   sample: pointer to sample array
-'   slen:   length of sample array
-    x := plot.widget.x
-    ls := sample[s].state
-    re := (plot.widget.x + plot.widget.w)-1                 ' pre-calc right edge
-    be := (plot.widget.y + plot.widget.h)-1                 ' pre-calc bottom edge
-
-    s := 0
-
-    ' clear plot area
-    disp.box(plot.widget.x, plot.widget.y, re, be, plot.widget.bgcolor, true)
-
-    repeat while (x < re)                                   ' plot until the right edge is reached
-        py := plot.widget.y + ( (sample[s].state ^ plot.invert_y) * (plot.widget.h-1))
-        dur_s := muldiv64(sample[s].duration, plot.x_zoom, 1_000000)    ' scale by zoom factor
-        if ( sample[s].state <> ls )                        ' draw transition
-            disp.vline(x, plot.widget.y, plot.widget.h, plot.plot_color)
-
-        ' draw high or low level
-        disp.hline(py, x, dur_s <# (re-x), plot.plot_color)
-        x := x + dur_s <# re
-        ls := sample[s].state                               ' remember state for next comparison
-        s++                                                 ' next sample
-        if ( s >= slen )
             return
 
 
@@ -220,36 +194,6 @@ pub invert_y(^digi_plot_s plot, i=-1)
         plot.invert_y := plot.invert_y ^ 1
     else                                        ' set state explicitly
         plot.invert_y := (i <> 0) & 1           ' non-zero = invert, 0 = no inversion
-
-
-pub ptr_widget(^digi_plot_s plot): ^widget_s ow
-' Get pointer to a digi-plot's widget configuration
-'   plot:       digi-plot (pointer to digi_plot_s struct)
-'   Returns:    pointer to widget_s struct
-    return @plot.widget
-
-
-pub set_default_bgcolor(c)
-' Set default background color for new digital waveform plots
-'   c:  color
-    defaults.widget.bgcolor := c
-
-
-pub set_default_fgcolor(c)
-' Set default foreground color for new digital waveform plots
-'   c:  color
-    defaults.widget.fgcolor := c
-
-
-pub set_default_dims(w, h)
-' Set default dimensions for new digital waveform plots
-    defaults.widget.w := w
-    defaults.widget.h := h
-
-
-pub set_default_x_zoom(z)
-
-    defaults.x_zoom := z
 
 
 pub set_plot_color(^digi_plot_s plot, c)
