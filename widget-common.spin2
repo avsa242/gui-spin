@@ -48,7 +48,7 @@ con
 
     ' flags common to all widgets
     FLAG_GROW_TO_FIT    = 1 << 31               ' grow (resize) a container widget to fit children
-
+    FLAG_DONT_CHANGE_POS= 1 << 30               ' parent: don't change my position when attaching me
 
 dat
 {
