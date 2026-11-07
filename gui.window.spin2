@@ -4,7 +4,7 @@
     Description:    GUI element: windows
     Author:         Jesse Burt
     Started:        Sep 5, 2026
-    Updated:        Oct 31, 2026
+    Updated:        Nov 7, 2026
     Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -153,7 +153,7 @@ pub draw(p_win=0) | ^window_s win, ^dispdrv_i disp, x, y
     DEBUG("[gui.window] draw(", uhex_(p_win), ") ", udec_(x), udec_(y), udec_(x+win.widget.w-1), udec_(y+win.widget.h-1) )
 
 
-pub obj_attach(^window_s win, p_obj, x=-1, y=-1): n | ^widget_s wp, ex, ey
+pub obj_attach(^window_s win, p_obj, x=-1, y=-1): n | ^widget_s child, ex, ey
 ' Attach a GUI object to a window's tree
 '   win:    pointer to window struct to attach object to
 '   p_obj:  pointer to object struct
@@ -163,10 +163,10 @@ pub obj_attach(^window_s win, p_obj, x=-1, y=-1): n | ^widget_s wp, ex, ey
 '               -1 on failure (object array is full)
     n := win.container.count
     if ( n < MAX_OBJECTS )
-        [wp] := p_obj
-        wp.parent := [win]
-        wp.p_disp := win.widget.p_disp
-        DEBUG("[gui.window] obj_attach: obj type ", zstr_(lookup(wp.type: @"TYPE_WINDOW", @"TYPE_BUTTON", @"TYPE_TEXTLABEL", @"TYPE_PROGRESSBAR") ), " w=", udec_(wp.w) )
+        [child] := p_obj
+        child.parent := [win]
+        child.p_disp := win.widget.p_disp
+        DEBUG("[gui.window] obj_attach: obj type ", zstr_(lookup(child.type: @"TYPE_WINDOW", @"TYPE_BUTTON", @"TYPE_TEXTLABEL", @"TYPE_PROGRESSBAR") ), " w=", udec_(child.w) )
         DEBUG("[gui.window] obj_attach: cursor before ", udec_(win.container.cursor.x), udec_(win.container.cursor.y) )
 
         win.container.buffer[n] := p_obj        ' add the object's pointer
@@ -174,52 +174,52 @@ pub obj_attach(^window_s win, p_obj, x=-1, y=-1): n | ^widget_s wp, ex, ey
 
         if ( win.widget.flags & FLAG_GROW_TO_FIT )
             ' resize the window by the minimum to fit the child object
-            win.widget.w := win.widget.w #> wp.w
-            win.widget.h := win.widget.h #> wp.h
+            win.widget.w := win.widget.w #> child.w
+            win.widget.h := win.widget.h #> child.h
             DEBUG("[gui.window] obj_attach(): resizing to fit widget ", udec_(win.widget.w), "x", udec_(win.widget.h))
 
         if ( (x == -1) and (y == -1) )
             ' modify the widget's position according to its layout gravity
-            case wp.layout_gravity
+            case child.layout_gravity
                 GRAV_UPPER_LEFT:
-                    wp.x := 0
-                    wp.y := 0
+                    child.x := win.grid_x
+                    child.y := win.grid_y
                 GRAV_CENTER_TOP:
-                    wp.x := (win.widget.w/2)-(wp.w/2)
+                    child.x := (win.widget.w/2)-(child.w/2)
                 GRAV_UPPER_RIGHT:
-                    wp.x := win.widget.w-win.grid_x-wp.w
+                    child.x := win.widget.w-win.grid_x-child.w
                 GRAV_CENTER_RIGHT:
-                    wp.x := win.widget.w-win.grid_x-wp.w
-                    wp.y := (win.widget.h/2)-(wp.h/2)
+                    child.x := win.widget.w-win.grid_x-child.w
+                    child.y := (win.widget.h/2)-(child.h/2)
                 GRAV_LOWER_RIGHT:
-                    wp.x := win.widget.w-win.grid_x-wp.w
-                    wp.y := win.widget.h-win.grid_y-wp.h
+                    child.x := win.widget.w-win.grid_x-child.w
+                    child.y := win.widget.h-win.grid_y-child.h
                 GRAV_CENTER_BOTTOM:
-                    wp.x := (win.widget.w/2)-(wp.w/2)
-                    wp.y := win.widget.h-win.grid_y-wp.h
+                    child.x := (win.widget.w/2)-(child.w/2)
+                    child.y := win.widget.h-win.grid_y-child.h
                 GRAV_LOWER_LEFT:
-                    wp.y := win.widget.h-win.grid_y-wp.h
+                    child.y := win.widget.h-win.grid_y-child.h
                 GRAV_CENTER_LEFT:
-                    wp.y := (win.widget.h/2)-(wp.h/2)
+                    child.y := (win.widget.h/2)-(child.h/2)
                 GRAV_CENTER:
-                    wp.x := (win.widget.w/2)-(wp.w/2)
-                    wp.y := (win.widget.h/2)-(wp.h/2)
+                    child.x := (win.widget.w/2)-(child.w/2)
+                    child.y := (win.widget.h/2)-(child.h/2)
                 other:
                     ' no gravity setting; use the cursor position
-                    wp.x := win.container.cursor.x
-                    wp.y := win.container.cursor.y
+                    child.x := win.container.cursor.x
+                    child.y := win.container.cursor.y
         else
             ' manually place
-            wp.x := x
-            wp.y := y
+            child.x := x
+            child.y := y
 
         ' move the window cursor by the size of the obj, wrapping around to the left (or top)
-        win.container.cursor.x += (wp.w+win.grid_x)
+        win.container.cursor.x += (child.w+win.grid_x)
 
         if ( win.container.cursor.x > (win.widget.x+win.widget.w-1) )
             DEBUG("[gui.window] obj_attach: cursor.x=", udec_(win.container.cursor.x), "; wrapping")
             win.container.cursor.x := win.grid_x
-            win.container.cursor.y += wp.h+win.grid_y
+            win.container.cursor.y += child.h+win.grid_y
         if ( win.container.cursor.y > (win.widget.y+win.widget.h-1) )
             DEBUG("[gui.window] obj_attach: cursor.y=", udec_(win.container.cursor.y), "; wrapping")
             win.container.cursor.x := win.grid_x
