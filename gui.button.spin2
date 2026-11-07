@@ -203,6 +203,9 @@ pub obj_attach(^button_s btn, p_obj, x=-1, y=-1): n | ^widget_s child, ex, ey
                 ' manually place
                 child.x := x
                 child.y := y
+                btn.container.cursor.x := x
+                btn.container.cursor.y := y
+                DEBUG("[gui.button] obj_attach(): manually placed ", udec(x), udec(y))
 
         ' move the container cursor by the size of the object,
         '   wrapping around to the left/top if needed

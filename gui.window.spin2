@@ -166,7 +166,7 @@ pub obj_attach(^window_s win, p_obj, x=-1, y=-1): n | ^widget_s child, ex, ey
         [child] := p_obj
         child.parent := [win]
         child.p_disp := win.widget.p_disp
-        DEBUG("[gui.window] obj_attach: obj type ", zstr_(lookup(child.type: @"TYPE_WINDOW", @"TYPE_BUTTON", @"TYPE_TEXTLABEL", @"TYPE_PROGRESSBAR") ), " w=", udec_(child.w) )
+        DEBUG("[gui.window] obj_attach: obj type ", zstr_(lookup(child.type: @"TYPE_WINDOW", @"TYPE_BUTTON", @"TYPE_TEXTLABEL", @"TYPE_PROGRESSBAR", @"TYPE_GRADIENT", @"TYPE_DIGI_PLOT") ), " w=", udec_(child.w) )
         DEBUG("[gui.window] obj_attach: cursor before ", udec_(win.container.cursor.x), udec_(win.container.cursor.y) )
 
         win.container.buffer[n] := p_obj        ' add the object's pointer
@@ -213,6 +213,9 @@ pub obj_attach(^window_s win, p_obj, x=-1, y=-1): n | ^widget_s child, ex, ey
                 ' manually place
                 child.x := x
                 child.y := y
+                win.container.cursor.x := x
+                win.container.cursor.y := y
+                DEBUG("[gui.window] obj_attach(): manually placed ", udec(x), udec(y))
 
         ' move the window cursor by the size of the obj, wrapping around to the left (or top)
         win.container.cursor.x += (child.w+win.grid_x)

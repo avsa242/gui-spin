@@ -112,6 +112,9 @@ pub obj_attach(^screen_s scr, p_obj, x=-1, y=-1): n | ^widget_s child
                 ' position was specified, so manually place it
                 child.x := x
                 child.y := y
+                scr.container.cursor.x := x
+                scr.container.cursor.y := y
+                DEBUG("[gui.screen] obj_attach(): manually placed ", udec(x), udec(y))
 
         DEBUG("[gui.screen] obj_attach: cursor before ", udec_(scr.container.cursor.x), udec_(scr.container.cursor.y) )
         scr.container.buffer[n] := p_obj        ' add the object's pointer
